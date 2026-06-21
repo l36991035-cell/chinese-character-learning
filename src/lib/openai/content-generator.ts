@@ -88,16 +88,16 @@ export async function generateCharacterContent(
   })
   const extRaw = JSON.parse(extResponse.choices[0].message.content ?? '{}')
 
-  // Merge with defaults — ensure all fields exist with correct types
+  // Enforce grade-based field availability — GPT may return fields beyond the grade ceiling
   const extensions: Extensions = {
     confusableChars: extRaw.confusableChars ?? [],
     wordFormation: extRaw.wordFormation ?? [],
     semanticRelation: extRaw.semanticRelation ?? [],
-    multiPronunciation: extRaw.multiPronunciation ?? [],
-    synonyms: extRaw.synonyms ?? [],
-    antonyms: extRaw.antonyms ?? [],
-    idioms: extRaw.idioms ?? [],
-    rhetoric: extRaw.rhetoric ?? [],
+    multiPronunciation: grade >= 3 ? (extRaw.multiPronunciation ?? []) : [],
+    synonyms: grade >= 3 ? (extRaw.synonyms ?? []) : [],
+    antonyms: grade >= 3 ? (extRaw.antonyms ?? []) : [],
+    idioms: grade >= 5 ? (extRaw.idioms ?? []) : [],
+    rhetoric: grade >= 5 ? (extRaw.rhetoric ?? []) : [],
   }
 
   return {
