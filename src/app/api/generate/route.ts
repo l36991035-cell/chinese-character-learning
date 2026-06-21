@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getFirebaseAdmin } from '@/lib/firebase/admin'
-import { generateCharacterContent } from '@/lib/openai/content-generator'
+import { generateCharacterContent } from '@/lib/gemini/content-generator'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300  // 5 minutes — may have many characters
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
   let generated = 0
   let errors = 0
 
-  // Process sequentially to avoid OpenAI rate limits
+  // Process sequentially to respect Gemini free tier rate limits (15 RPM)
   for (const char of chars) {
     try {
       // Mark as pending in generated_content
@@ -64,6 +64,10 @@ export async function POST(request: NextRequest) {
         errorMessage: String(err),
       }, { merge: true })
       errors++
+    }
+    // 6s between characters to respect Gemini free tier (15 RPM, 2 calls/char)
+    if (chars.indexOf(char) < chars.length - 1) {
+      await new Promise((r) => setTimeout(r, 6000))
     }
   }
 

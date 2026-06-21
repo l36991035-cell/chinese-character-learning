@@ -1,4 +1,4 @@
-import { getOpenAI } from './client'
+import { getGemini } from './client'
 import type { GeneratedContent, Extensions } from '@/types'
 
 const CONTENT_PROMPT = `You are a Taiwanese elementary school Chinese teacher creating learning materials.
@@ -62,33 +62,28 @@ export async function generateCharacterContent(
   courseId: string,
   characterId: string
 ): Promise<Omit<GeneratedContent, 'status' | 'generatedAt' | 'errorMessage'>> {
-  const openai = getOpenAI()
+  const genAI = getGemini()
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-2.0-flash',
+    generationConfig: { responseMimeType: 'application/json' },
+  })
 
   // Generate core content
-  const contentResponse = await openai.chat.completions.create({
-    model: 'gpt-4o',
-    messages: [{
-      role: 'user',
-      content: CONTENT_PROMPT.replace('{character}', character).replace(/{grade}/g, String(grade)),
-    }],
-    response_format: { type: 'json_object' },
-    max_tokens: 500,
-  })
-  const core = JSON.parse(contentResponse.choices[0].message.content ?? '{}')
+  const contentResult = await model.generateContent(
+    CONTENT_PROMPT.replace('{character}', character).replace(/{grade}/g, String(grade))
+  )
+  const core = JSON.parse(contentResult.response.text())
+
+  // 1-second delay between the two calls within a character
+  await new Promise((r) => setTimeout(r, 1000))
 
   // Generate extension content
-  const extResponse = await openai.chat.completions.create({
-    model: 'gpt-4o',
-    messages: [{
-      role: 'user',
-      content: EXTENSION_PROMPT.replace('{character}', character).replace(/{grade}/g, String(grade)),
-    }],
-    response_format: { type: 'json_object' },
-    max_tokens: 800,
-  })
-  const extRaw = JSON.parse(extResponse.choices[0].message.content ?? '{}')
+  const extResult = await model.generateContent(
+    EXTENSION_PROMPT.replace('{character}', character).replace(/{grade}/g, String(grade))
+  )
+  const extRaw = JSON.parse(extResult.response.text())
 
-  // Enforce grade-based field availability — GPT may return fields beyond the grade ceiling
+  // Enforce grade-based field availability — Gemini may return fields beyond the grade ceiling
   const extensions: Extensions = {
     confusableChars: extRaw.confusableChars ?? [],
     wordFormation: extRaw.wordFormation ?? [],
