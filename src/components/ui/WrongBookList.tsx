@@ -21,8 +21,8 @@ export function WrongBookList({ items }: { items: Array<WrongBookEntry & { id: s
           <div className="flex items-center gap-4">
             <span className="text-3xl font-bold text-red-500 w-12 text-center">{item.character}</span>
             <div>
-              <p className="text-base font-medium text-gray-700">錯誤 {item.wrongCount} 次</p>
-              <p className="text-sm text-gray-400">加入：{formatDate(item.addedAt)}</p>
+              <p className="text-base font-medium text-gray-700">課程：{item.courseId}</p>
+              <p className="text-sm text-gray-400">錯誤 {item.wrongCount} 次・加入：{formatDate(item.addedAt)}</p>
             </div>
           </div>
         </div>
