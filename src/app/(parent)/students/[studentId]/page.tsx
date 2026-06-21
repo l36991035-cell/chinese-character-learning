@@ -4,10 +4,14 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
-import { updateStudent } from '@/lib/firebase/students'
-import type { Student } from '@/types'
+import { updateStudent, linkCourseToStudent, unlinkCourseFromStudent, getStudentCourses } from '@/lib/firebase/students'
+import { getCoursesByImporter, getCourse } from '@/lib/firebase/courses'
+import { useAuth } from '@/hooks/useAuth'
+import type { Student, Course } from '@/types'
 
 type StudentWithId = Student & { id: string }
+type CourseWithId = Course & { id: string }
+interface LinkedCourse { courseId: string; selectedLessons: number[] }
 
 interface ExtensionMeta {
   key: keyof Student['enabledExtensions']
@@ -26,12 +30,23 @@ const EXTENSIONS: ExtensionMeta[] = [
   { key: 'rhetoric', label: '修辭', minGrade: 5 },
 ]
 
+const SEMESTER_LABEL: Record<1 | 2, string> = { 1: '上學期', 2: '下學期' }
+
 export default function StudentSettingsPage() {
   const params = useParams()
   const studentId = params.studentId as string
+  const { user } = useAuth()
+
   const [student, setStudent] = useState<StudentWithId | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+
+  // Course linking state
+  const [linkedCourses, setLinkedCourses] = useState<LinkedCourse[]>([])
+  const [linkedCourseDetails, setLinkedCourseDetails] = useState<Record<string, CourseWithId>>({})
+  const [allReadyCourses, setAllReadyCourses] = useState<CourseWithId[]>([])
+  const [showAddCourse, setShowAddCourse] = useState(false)
+  const [linkingCourseId, setLinkingCourseId] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchStudent() {
@@ -43,6 +58,30 @@ export default function StudentSettingsPage() {
     }
     fetchStudent()
   }, [studentId])
+
+  useEffect(() => {
+    async function fetchLinkedCourses() {
+      const linked = await getStudentCourses(studentId)
+      setLinkedCourses(linked)
+      // Fetch course details for each linked course
+      const details: Record<string, CourseWithId> = {}
+      await Promise.all(
+        linked.map(async ({ courseId }) => {
+          const course = await getCourse(courseId)
+          if (course) details[courseId] = { id: courseId, ...course }
+        })
+      )
+      setLinkedCourseDetails(details)
+    }
+    fetchLinkedCourses()
+  }, [studentId])
+
+  useEffect(() => {
+    if (!user) return
+    getCoursesByImporter(user.uid).then((courses) => {
+      setAllReadyCourses(courses.filter((c) => c.status === 'ready'))
+    })
+  }, [user])
 
   async function handleToggle(key: keyof Student['enabledExtensions']) {
     if (!student) return
@@ -58,6 +97,34 @@ export default function StudentSettingsPage() {
       setSaving(false)
     }
   }
+
+  async function handleLinkCourse(course: CourseWithId) {
+    setLinkingCourseId(course.id)
+    try {
+      await linkCourseToStudent(studentId, course.id, course.lessonNumber)
+      setLinkedCourses((prev) => [
+        ...prev,
+        { courseId: course.id, selectedLessons: [course.lessonNumber] },
+      ])
+      setLinkedCourseDetails((prev) => ({ ...prev, [course.id]: course }))
+      setShowAddCourse(false)
+    } finally {
+      setLinkingCourseId(null)
+    }
+  }
+
+  async function handleUnlinkCourse(courseId: string) {
+    await unlinkCourseFromStudent(studentId, courseId)
+    setLinkedCourses((prev) => prev.filter((lc) => lc.courseId !== courseId))
+    setLinkedCourseDetails((prev) => {
+      const copy = { ...prev }
+      delete copy[courseId]
+      return copy
+    })
+  }
+
+  const linkedCourseIds = new Set(linkedCourses.map((lc) => lc.courseId))
+  const availableToAdd = allReadyCourses.filter((c) => !linkedCourseIds.has(c.id))
 
   if (loading) {
     return <p className="text-lg text-gray-500">載入中…</p>
@@ -80,7 +147,8 @@ export default function StudentSettingsPage() {
         <p className="text-lg text-gray-500">{student.grade} 年級</p>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+      {/* Extension toggles */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-800">延伸學習設定</h2>
           {saving && <span className="text-base text-gray-400">儲存中…</span>}
@@ -113,6 +181,86 @@ export default function StudentSettingsPage() {
             )
           })}
         </div>
+      </div>
+
+      {/* Linked courses */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-800">已選課程</h2>
+          <button
+            onClick={() => setShowAddCourse((v) => !v)}
+            className="min-h-[64px] px-5 text-lg font-medium rounded-xl border-2 border-blue-600 text-blue-600 hover:bg-blue-50 transition-colors"
+          >
+            + 新增課程
+          </button>
+        </div>
+
+        {linkedCourses.length === 0 && !showAddCourse && (
+          <p className="text-lg text-gray-400">尚未連結任何課程</p>
+        )}
+
+        <div className="flex flex-col gap-3">
+          {linkedCourses.map(({ courseId }) => {
+            const course = linkedCourseDetails[courseId]
+            return (
+              <div
+                key={courseId}
+                className="flex items-center justify-between p-4 rounded-xl border border-gray-200"
+              >
+                <div>
+                  {course ? (
+                    <>
+                      <p className="text-lg font-medium text-gray-800">
+                        {course.publisher}・{course.grade} 年級・{SEMESTER_LABEL[course.semester]}・第 {course.lessonNumber} 課
+                      </p>
+                      <p className="text-base text-gray-500">{course.lessonTitle}</p>
+                    </>
+                  ) : (
+                    <p className="text-lg text-gray-400">載入中…</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => handleUnlinkCourse(courseId)}
+                  className="min-h-[64px] px-4 text-lg text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                >
+                  取消連結
+                </button>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Add course panel */}
+        {showAddCourse && (
+          <div className="mt-6 border-t pt-6">
+            <h3 className="text-lg font-semibold text-gray-700 mb-4">選擇課程</h3>
+            {availableToAdd.length === 0 ? (
+              <p className="text-lg text-gray-400">
+                沒有可新增的課程。請先{' '}
+                <Link href="/courses/import" className="text-blue-600 hover:underline">
+                  匯入課程
+                </Link>
+                。
+              </p>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {availableToAdd.map((course) => (
+                  <button
+                    key={course.id}
+                    onClick={() => handleLinkCourse(course)}
+                    disabled={linkingCourseId === course.id}
+                    className="w-full text-left p-4 rounded-xl border-2 border-gray-200 hover:border-blue-400 transition-colors disabled:opacity-50"
+                  >
+                    <p className="text-lg font-medium text-gray-800">
+                      {course.publisher}・{course.grade} 年級・{SEMESTER_LABEL[course.semester]}・第 {course.lessonNumber} 課
+                    </p>
+                    <p className="text-base text-gray-500">{course.lessonTitle}・{course.characterCount} 個生字</p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

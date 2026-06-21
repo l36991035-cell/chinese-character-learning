@@ -8,7 +8,9 @@ import {
   where,
   orderBy,
   getDocs,
+  setDoc,
   serverTimestamp,
+  type Timestamp,
 } from 'firebase/firestore'
 import { db } from './client'
 import { getDefaultExtensions } from '@/lib/utils/grade-extensions'
@@ -49,4 +51,32 @@ export async function getStudentsByParent(parentId: string): Promise<Array<Stude
 
 export async function deleteStudent(studentId: string) {
   await deleteDoc(doc(db, 'students', studentId))
+}
+
+export async function linkCourseToStudent(
+  studentId: string,
+  courseId: string,
+  lessonNumber: number
+): Promise<void> {
+  await setDoc(doc(db, 'students', studentId, 'courses', courseId), {
+    linkedAt: serverTimestamp(),
+    selectedLessons: [lessonNumber],
+  })
+}
+
+export async function unlinkCourseFromStudent(
+  studentId: string,
+  courseId: string
+): Promise<void> {
+  await deleteDoc(doc(db, 'students', studentId, 'courses', courseId))
+}
+
+export async function getStudentCourses(
+  studentId: string
+): Promise<Array<{ courseId: string; linkedAt: Timestamp; selectedLessons: number[] }>> {
+  const snapshot = await getDocs(collection(db, 'students', studentId, 'courses'))
+  return snapshot.docs.map((d) => ({
+    courseId: d.id,
+    ...(d.data() as { linkedAt: Timestamp; selectedLessons: number[] }),
+  }))
 }
