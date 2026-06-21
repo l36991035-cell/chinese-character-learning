@@ -1,13 +1,13 @@
 'use client'
 import { useParams, useRouter } from 'next/navigation'
-export default function StudentError({ reset }: { reset: () => void }) {
+export default function StudentError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   const params = useParams()
   const router = useRouter()
   const studentId = params?.studentId as string | undefined
   return (
     <div className="flex flex-col items-center justify-center min-h-screen gap-6 text-center p-8">
       <h2 className="text-3xl font-bold text-red-600">載入失敗</h2>
-      <p className="text-xl text-gray-500">請確認網路連線後再試</p>
+      <p className="text-xl text-gray-500">{error.message || '請確認網路連線後再試'}</p>
       <div className="flex flex-col gap-3 w-full max-w-xs">
         <button
           onClick={reset}

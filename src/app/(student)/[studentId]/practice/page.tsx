@@ -13,6 +13,7 @@ import { recordPractice } from '@/lib/firebase/practice-history'
 import { buildPracticeSession } from '@/lib/utils/session-builder'
 import { usePracticeSession } from '@/hooks/usePracticeSession'
 import { AudioPlayer } from '@/components/ui/AudioPlayer'
+import { Skeleton } from '@/components/ui/Skeleton'
 import type { Student, GeneratedContent, WrongBookEntry } from '@/types'
 import type { Character } from '@/types'
 
@@ -145,8 +146,14 @@ export default function PracticePage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-2xl text-gray-500">載入中…</p>
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-7 w-24" />
+          <Skeleton className="h-5 w-16" />
+        </div>
+        <Skeleton className="h-2 w-full" />
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-64 w-full" />
       </div>
     )
   }
