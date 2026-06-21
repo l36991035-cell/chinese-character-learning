@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Users ───────────────────────────────────────────────────────────────
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ─── Students ─────────────────────────────────────────────────────────────
+    match /students/{studentId} {
+      allow read, write: if request.auth != null
+        && request.auth.uid == resource.data.parentId;
+
+      // Wrongbook subcollection
+      match /wrongbook/{charId} {
+        allow read, write: if request.auth != null
+          && request.auth.uid == get(/databases/$(database)/documents/students/$(studentId)).data.parentId;
+      }
+
+      // Practice history subcollection
+      match /practice_history/{historyId} {
+        allow read, write: if request.auth != null
+          && request.auth.uid == get(/databases/$(database)/documents/students/$(studentId)).data.parentId;
+      }
+
+      // Student–Course linking subcollection
+      match /courses/{courseId} {
+        allow read, write: if request.auth != null
+          && request.auth.uid == get(/databases/$(database)/documents/students/$(studentId)).data.parentId;
+      }
+    }
+
+    // ─── Courses ──────────────────────────────────────────────────────────────
+    // Any authenticated user can read; only the importer can write
+    match /courses/{courseId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null
+        && request.auth.uid == resource.data.importedBy;
+    }
+
+    // ─── Characters ───────────────────────────────────────────────────────────
+    match /characters/{charId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // ─── Generated Content ────────────────────────────────────────────────────
+    match /generated_content/{charId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+  }
+}
