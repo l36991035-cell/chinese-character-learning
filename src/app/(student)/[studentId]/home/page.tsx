@@ -9,6 +9,7 @@ import { db } from '@/lib/firebase/client'
 import { getStudentCourses } from '@/lib/firebase/students'
 import { useWrongBook } from '@/hooks/useWrongBook'
 import { WrongBookAlert } from '@/components/ui/WrongBookAlert'
+import { Skeleton } from '@/components/ui/Skeleton'
 import type { Student } from '@/types'
 
 export default function StudentHomePage() {
@@ -42,8 +43,14 @@ export default function StudentHomePage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-2xl text-gray-500">載入中…</p>
+      <div className="flex flex-col gap-6">
+        <div className="text-center py-6">
+          <Skeleton className="h-10 w-32 mx-auto mb-3" />
+          <Skeleton className="h-6 w-20 mx-auto" />
+        </div>
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-16 w-full" />
       </div>
     )
   }

@@ -122,7 +122,7 @@ export default function ImportPage() {
   return (
     <div className="max-w-lg mx-auto">
       <div className="mb-6">
-        <Link href="/dashboard" className="text-lg text-blue-600 hover:underline">
+        <Link href="/dashboard" className="inline-flex items-center min-h-[48px] min-w-[48px] text-lg text-blue-600 hover:underline">
           ← 回到首頁
         </Link>
       </div>

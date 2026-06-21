@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { getStudentsByParent } from '@/lib/firebase/students'
 import { getStudentStats } from '@/lib/firebase/practice-history'
 import { getWrongBook } from '@/lib/firebase/wrongbook'
+import { StudentCardSkeleton } from '@/components/ui/Skeleton'
 import type { Student } from '@/types'
 
 type StudentWithId = Student & { id: string }
@@ -22,7 +23,21 @@ export default function DashboardPage() {
   }, [user])
 
   if (loading) {
-    return <p className="text-lg text-gray-500">載入中…</p>
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-8">
+          <div className="h-9 w-32 animate-pulse bg-gray-200 rounded-xl" />
+          <div className="flex gap-3">
+            <div className="h-16 w-36 animate-pulse bg-gray-200 rounded-xl" />
+            <div className="h-16 w-32 animate-pulse bg-gray-200 rounded-xl" />
+          </div>
+        </div>
+        <div className="grid gap-6 sm:grid-cols-2">
+          <StudentCardSkeleton />
+          <StudentCardSkeleton />
+        </div>
+      </div>
+    )
   }
 
   return (
