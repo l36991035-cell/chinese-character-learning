@@ -296,6 +296,10 @@ export default function ImportPage() {
             {courseStatus && <StatusBadge status={courseStatus} />}
           </div>
 
+          {courseStatus === 'ai_generating' && characterCount > 0 && (
+            <p className="text-lg text-gray-600">AI 生成中… 共 {characterCount} 個生字</p>
+          )}
+
           {step === 'processing' && (
             <div className="flex gap-2 items-center">
               <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0ms' }} />
