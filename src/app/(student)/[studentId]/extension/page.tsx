@@ -43,14 +43,11 @@ export default function ExtensionPage() {
           }
         }
 
-        // Load generated content for each character
-        const contents: CharContent[] = []
-        for (const charId of uniqueCharIds) {
-          const content = await getGeneratedContent(charId)
-          if (content && content.status === 'ready') {
-            contents.push({ character: content.character, content })
-          }
-        }
+        // Load generated content for all characters in parallel
+        const results = await Promise.all(uniqueCharIds.map((id) => getGeneratedContent(id)))
+        const contents: CharContent[] = results
+          .filter((c): c is NonNullable<typeof c> => c !== null && c.status === 'ready')
+          .map((c) => ({ character: c.character, content: c }))
         setCharContents(contents)
       } finally {
         setLoading(false)
