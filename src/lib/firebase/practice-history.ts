@@ -31,3 +31,22 @@ export async function getTodayPractice(
   const snap = await getDocs(q)
   return snap.docs.map((d) => ({ id: d.id, ...(d.data() as PracticeHistory) }))
 }
+
+export async function getStudentStats(
+  studentId: string
+): Promise<{ learnedCount: number; accuracy: number }> {
+  const snap = await getDocs(collection(db, 'students', studentId, 'practice_history'))
+  const docs = snap.docs.map((d) => d.data() as PracticeHistory)
+
+  const learnedIds = new Set<string>()
+  let correct = 0
+  for (const entry of docs) {
+    if (entry.isCorrect) {
+      learnedIds.add(entry.characterId)
+      correct++
+    }
+  }
+
+  const accuracy = docs.length > 0 ? Math.round((correct / docs.length) * 100) : 0
+  return { learnedCount: learnedIds.size, accuracy }
+}

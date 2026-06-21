@@ -6,8 +6,11 @@ import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
 import { updateStudent, linkCourseToStudent, unlinkCourseFromStudent, getStudentCourses } from '@/lib/firebase/students'
 import { getCoursesByImporter, getCourse } from '@/lib/firebase/courses'
+import { getStudentStats } from '@/lib/firebase/practice-history'
+import { getWrongBook } from '@/lib/firebase/wrongbook'
 import { useAuth } from '@/hooks/useAuth'
-import type { Student, Course } from '@/types'
+import { WrongBookList } from '@/components/ui/WrongBookList'
+import type { Student, Course, WrongBookEntry } from '@/types'
 
 type StudentWithId = Student & { id: string }
 type CourseWithId = Course & { id: string }
@@ -40,6 +43,9 @@ export default function StudentSettingsPage() {
   const [student, setStudent] = useState<StudentWithId | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [stats, setStats] = useState<{ learnedCount: number; accuracy: number } | null>(null)
+  const [wrongBook, setWrongBook] = useState<Array<WrongBookEntry & { id: string }>>([])
+
 
   // Course linking state
   const [linkedCourses, setLinkedCourses] = useState<LinkedCourse[]>([])
@@ -50,10 +56,16 @@ export default function StudentSettingsPage() {
 
   useEffect(() => {
     async function fetchStudent() {
-      const snap = await getDoc(doc(db, 'students', studentId))
+      const [snap, statsData, wb] = await Promise.all([
+        getDoc(doc(db, 'students', studentId)),
+        getStudentStats(studentId),
+        getWrongBook(studentId),
+      ])
       if (snap.exists()) {
         setStudent({ id: snap.id, ...snap.data() } as StudentWithId)
       }
+      setStats(statsData)
+      setWrongBook(wb)
       setLoading(false)
     }
     fetchStudent()
@@ -145,6 +157,33 @@ export default function StudentSettingsPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800">{student.name}</h1>
         <p className="text-lg text-gray-500">{student.grade} 年級</p>
+      </div>
+
+      {/* Stats */}
+      {stats && (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-6">學習統計</h2>
+          <div className="flex gap-8">
+            <div className="text-center">
+              <p className="text-4xl font-bold text-blue-600">{stats.learnedCount}</p>
+              <p className="text-base text-gray-500 mt-1">已學字數</p>
+            </div>
+            <div className="text-center">
+              <p className="text-4xl font-bold text-green-600">{stats.accuracy}%</p>
+              <p className="text-base text-gray-500 mt-1">正確率</p>
+            </div>
+            <div className="text-center">
+              <p className="text-4xl font-bold text-orange-500">{wrongBook.length}</p>
+              <p className="text-base text-gray-500 mt-1">錯字本</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Wrong book list */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-6">
+        <h2 className="text-xl font-semibold text-gray-800 mb-6">錯字本</h2>
+        <WrongBookList items={wrongBook} />
       </div>
 
       {/* Extension toggles */}

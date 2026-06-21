@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 import { getStudentsByParent } from '@/lib/firebase/students'
+import { getStudentStats } from '@/lib/firebase/practice-history'
+import { getWrongBook } from '@/lib/firebase/wrongbook'
 import type { Student } from '@/types'
 
 type StudentWithId = Student & { id: string }
@@ -65,6 +67,19 @@ export default function DashboardPage() {
 }
 
 function StudentCard({ student }: { student: StudentWithId }) {
+  const [learnedCount, setLearnedCount] = useState(0)
+  const [wrongCount, setWrongCount] = useState(0)
+
+  useEffect(() => {
+    Promise.all([
+      getStudentStats(student.id),
+      getWrongBook(student.id),
+    ]).then(([stats, wb]) => {
+      setLearnedCount(stats.learnedCount)
+      setWrongCount(wb.length)
+    })
+  }, [student.id])
+
   return (
     <div className="rounded-2xl bg-white shadow-sm border border-gray-200 p-6">
       <div className="mb-4">
@@ -74,11 +89,11 @@ function StudentCard({ student }: { student: StudentWithId }) {
 
       <div className="flex gap-6 mb-6">
         <div className="text-center">
-          <p className="text-3xl font-bold text-blue-600">0</p>
+          <p className="text-3xl font-bold text-blue-600">{learnedCount}</p>
           <p className="text-base text-gray-500">已學字數</p>
         </div>
         <div className="text-center">
-          <p className="text-3xl font-bold text-orange-500">0</p>
+          <p className="text-3xl font-bold text-orange-500">{wrongCount}</p>
           <p className="text-base text-gray-500">錯字本數量</p>
         </div>
       </div>
