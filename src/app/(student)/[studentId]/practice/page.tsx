@@ -26,6 +26,7 @@ export default function PracticePage() {
   const mode = (searchParams.get('mode') ?? 'course') as 'wrongbook' | 'course'
 
   const [loading, setLoading] = useState(true)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const [student, setStudent] = useState<(Student & { id: string }) | null>(null)
   const [wrongBookItems, setWrongBookItems] = useState<Array<WrongBookEntry & { id: string }>>([])
 
@@ -95,42 +96,51 @@ export default function PracticePage() {
 
   async function handleCorrect() {
     if (!currentItem || !student) return
+    setSubmitError(null)
     const practiceMode = currentIndex % 2 === 0 ? 'vocabulary' : 'sentence'
-    await recordPractice(studentId, {
-      characterId: currentItem.characterId,
-      character: currentItem.character,
-      courseId: currentItem.courseId,
-      sessionId,
-      practiceMode,
-      isCorrect: true,
-    })
-    // Remove from wrong book if it was there
-    const inWrongBook = wrongBookItems.some((w) => w.characterId === currentItem.characterId)
-    if (inWrongBook || currentItem.isFromWrongBook) {
-      await removeFromWrongBook(studentId, currentItem.characterId)
-      setWrongBookItems((prev) => prev.filter((w) => w.characterId !== currentItem.characterId))
+    try {
+      await recordPractice(studentId, {
+        characterId: currentItem.characterId,
+        character: currentItem.character,
+        courseId: currentItem.courseId,
+        sessionId,
+        practiceMode,
+        isCorrect: true,
+      })
+      const inWrongBook = wrongBookItems.some((w) => w.characterId === currentItem.characterId)
+      if (inWrongBook || currentItem.isFromWrongBook) {
+        await removeFromWrongBook(studentId, currentItem.characterId)
+        setWrongBookItems((prev) => prev.filter((w) => w.characterId !== currentItem.characterId))
+      }
+      markResult(true)
+    } catch {
+      setSubmitError('儲存紀錄失敗，請再試一次')
     }
-    markResult(true)
   }
 
   async function handleWrong() {
     if (!currentItem || !student) return
+    setSubmitError(null)
     const practiceMode = currentIndex % 2 === 0 ? 'vocabulary' : 'sentence'
-    await recordPractice(studentId, {
-      characterId: currentItem.characterId,
-      character: currentItem.character,
-      courseId: currentItem.courseId,
-      sessionId,
-      practiceMode,
-      isCorrect: false,
-    })
-    await addToWrongBook(studentId, {
-      characterId: currentItem.characterId,
-      character: currentItem.character,
-      courseId: currentItem.courseId,
-      grade: currentItem.grade,
-    })
-    markResult(false)
+    try {
+      await recordPractice(studentId, {
+        characterId: currentItem.characterId,
+        character: currentItem.character,
+        courseId: currentItem.courseId,
+        sessionId,
+        practiceMode,
+        isCorrect: false,
+      })
+      await addToWrongBook(studentId, {
+        characterId: currentItem.characterId,
+        character: currentItem.character,
+        courseId: currentItem.courseId,
+        grade: currentItem.grade,
+      })
+      markResult(false)
+    } catch {
+      setSubmitError('儲存紀錄失敗，請再試一次')
+    }
   }
 
   if (loading) {
@@ -256,6 +266,10 @@ export default function PracticePage() {
                 : currentItem.content.sentenceBopomofo}
             </p>
           </div>
+
+          {submitError && (
+            <p className="text-lg text-red-600 text-center font-medium">{submitError}</p>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <button

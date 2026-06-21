@@ -1,12 +1,14 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 
 export function AudioPlayer({ text }: { text: string }) {
   const [playing, setPlaying] = useState(false)
   const [error, setError] = useState(false)
+  const playingRef = useRef(false)
 
   async function handlePlay() {
-    if (playing) return
+    if (playingRef.current) return
+    playingRef.current = true
     setPlaying(true)
     setError(false)
     try {
@@ -16,15 +18,18 @@ export function AudioPlayer({ text }: { text: string }) {
       const url = URL.createObjectURL(blob)
       const audio = new Audio(url)
       audio.onended = () => {
+        playingRef.current = false
         setPlaying(false)
         URL.revokeObjectURL(url)
       }
       audio.onerror = () => {
+        playingRef.current = false
         setPlaying(false)
         setError(true)
       }
       await audio.play()
     } catch {
+      playingRef.current = false
       setPlaying(false)
       setError(true)
     }
