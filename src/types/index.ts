@@ -89,8 +89,8 @@ export interface Course {
 export interface Character {
   courseId: string
   character: string           // '樹'
-  strokeCount: number         // 16
-  radical: string             // '木'
+  strokeCount: number | null  // 16, null if not visible in PDF
+  radical: string | null      // '木', null if not visible in PDF
   order: number               // 1, 2, 3...
 }
 
