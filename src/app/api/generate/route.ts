@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getFirebaseAdmin } from '@/lib/firebase/admin'
+import { getFirebaseAdmin, requireAuth } from '@/lib/firebase/admin'
 import { generateCharacterContent } from '@/lib/gemini/content-generator'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300  // 5 minutes — may have many characters
 
 export async function POST(request: NextRequest) {
+  const internalSecret = request.headers.get('X-Internal-Secret')
+  if (!internalSecret || internalSecret !== process.env.INTERNAL_API_SECRET) {
+    try {
+      await requireAuth(request)
+    } catch {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    }
+  }
+
   const { courseId } = await request.json() as { courseId: string }
   if (!courseId) {
     return NextResponse.json({ success: false, error: 'Missing courseId' }, { status: 400 })

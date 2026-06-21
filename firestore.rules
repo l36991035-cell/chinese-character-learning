@@ -43,13 +43,13 @@ service cloud.firestore {
     // ─── Characters ───────────────────────────────────────────────────────────
     match /characters/{charId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow write: if false;
     }
 
     // ─── Generated Content ────────────────────────────────────────────────────
     match /generated_content/{charId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow write: if false;
     }
   }
 }

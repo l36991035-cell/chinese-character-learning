@@ -1,12 +1,13 @@
 import {
   doc,
-  setDoc,
+  getDoc,
   updateDoc,
   deleteDoc,
   getDocs,
   collection,
   serverTimestamp,
   increment,
+  setDoc,
 } from 'firebase/firestore'
 import { db } from './client'
 import type { WrongBookEntry } from '@/types'
@@ -21,22 +22,20 @@ export async function addToWrongBook(
   }
 ): Promise<void> {
   const ref = doc(db, 'students', studentId, 'wrongbook', entry.characterId)
-  // Create doc if not exists (merge keeps existing fields)
-  await setDoc(
-    ref,
-    {
+  const snap = await getDoc(ref)
+  if (!snap.exists()) {
+    await setDoc(ref, {
       characterId: entry.characterId,
       character: entry.character,
       courseId: entry.courseId,
       grade: entry.grade,
       addedAt: serverTimestamp(),
-      wrongCount: 0,
+      wrongCount: 1,
       lastPracticedAt: null,
-    },
-    { merge: true }
-  )
-  // Always increment wrongCount
-  await updateDoc(ref, { wrongCount: increment(1) })
+    })
+  } else {
+    await updateDoc(ref, { wrongCount: increment(1) })
+  }
 }
 
 export async function removeFromWrongBook(

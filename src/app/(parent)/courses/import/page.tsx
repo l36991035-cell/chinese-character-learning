@@ -2,6 +2,8 @@
 export const dynamic = 'force-dynamic'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { getIdToken } from 'firebase/auth'
+import { auth } from '@/lib/firebase/client'
 import { useAuth } from '@/hooks/useAuth'
 import { createCourse, getCourse } from '@/lib/firebase/courses'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -79,8 +81,8 @@ export default function ImportPage() {
   }
 
   function handleFileSelect(file: File) {
-    if (!file.name.endsWith('.pdf')) {
-      setUploadError('請上傳 PDF 檔案')
+    if (!file.name.endsWith('.docx')) {
+      setUploadError('請上傳 Word 文件（.docx）')
       return
     }
     setSelectedFile(file)
@@ -99,12 +101,24 @@ export default function ImportPage() {
     setUploading(true)
     setUploadError(null)
 
-    const fd = new FormData()
-    fd.append('file', selectedFile)
-    fd.append('courseId', courseId)
-
     try {
-      const res = await fetch('/api/pdf', { method: 'POST', body: fd })
+      const currentUser = auth.currentUser
+      if (!currentUser) {
+        setUploadError('請先登入')
+        setUploading(false)
+        return
+      }
+      const idToken = await getIdToken(currentUser)
+
+      const fd = new FormData()
+      fd.append('file', selectedFile)
+      fd.append('courseId', courseId)
+
+      const res = await fetch('/api/pdf', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${idToken}` },
+        body: fd,
+      })
       const json = await res.json() as { success: boolean; error?: string }
       if (!json.success) {
         setUploadError(json.error ?? '上傳失敗，請再試一次')
@@ -226,7 +240,7 @@ export default function ImportPage() {
             type="submit"
             className="min-h-[64px] text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
           >
-            下一步：上傳 PDF
+            下一步：上傳 Word 文件
           </button>
         </form>
       )}
@@ -235,7 +249,7 @@ export default function ImportPage() {
       {step === 'upload' && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 flex flex-col gap-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-1">上傳課文 PDF</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-1">上傳課文 Word 文件</h2>
             <p className="text-lg text-gray-500">
               {form.publisher}・{form.grade} 年級・{form.semester === 1 ? '上學期' : '下學期'}・第 {form.lessonNumber} 課
             </p>
@@ -254,7 +268,7 @@ export default function ImportPage() {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".pdf"
+              accept=".docx"
               className="hidden"
               onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
             />
@@ -267,7 +281,7 @@ export default function ImportPage() {
             ) : (
               <div>
                 <p className="text-2xl mb-2">📂</p>
-                <p className="text-xl text-gray-500">拖曳 PDF 至此，或點擊選擇檔案</p>
+                <p className="text-xl text-gray-500">拖曳 Word 文件（.docx）至此，或點擊選擇檔案</p>
               </div>
             )}
           </div>
