@@ -7,8 +7,9 @@ import Link from 'next/link'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
 import { getStudentCourses } from '@/lib/firebase/students'
-import { getWrongBook } from '@/lib/firebase/wrongbook'
-import type { Student, WrongBookEntry } from '@/types'
+import { useWrongBook } from '@/hooks/useWrongBook'
+import { WrongBookAlert } from '@/components/ui/WrongBookAlert'
+import type { Student } from '@/types'
 
 export default function StudentHomePage() {
   const params = useParams()
@@ -17,21 +18,20 @@ export default function StudentHomePage() {
 
   const [loading, setLoading] = useState(true)
   const [student, setStudent] = useState<(Student & { id: string }) | null>(null)
-  const [wrongBook, setWrongBook] = useState<Array<WrongBookEntry & { id: string }>>([])
   const [hasCourses, setHasCourses] = useState(false)
+
+  const { items: wrongBook } = useWrongBook(studentId)
 
   useEffect(() => {
     async function load() {
       try {
-        const [snap, wb, linkedCourses] = await Promise.all([
+        const [snap, linkedCourses] = await Promise.all([
           getDoc(doc(db, 'students', studentId)),
-          getWrongBook(studentId),
           getStudentCourses(studentId),
         ])
         if (snap.exists()) {
           setStudent({ id: snap.id, ...snap.data() } as Student & { id: string })
         }
-        setWrongBook(wb)
         setHasCourses(linkedCourses.length > 0)
       } finally {
         setLoading(false)
@@ -65,19 +65,7 @@ export default function StudentHomePage() {
       </div>
 
       {/* Wrong book alert */}
-      {wrongBook.length > 0 && (
-        <div className="bg-amber-50 border-2 border-amber-400 rounded-2xl p-6 flex flex-col gap-4">
-          <p className="text-xl font-medium text-amber-800">
-            你有 {wrongBook.length} 個錯字，先來練習！
-          </p>
-          <button
-            onClick={() => router.push(`/${studentId}/practice?mode=wrongbook`)}
-            className="min-h-[64px] flex items-center justify-center text-xl font-semibold rounded-xl bg-amber-400 text-white hover:bg-amber-500 transition-colors"
-          >
-            練習錯字本
-          </button>
-        </div>
-      )}
+      <WrongBookAlert count={wrongBook.length} studentId={studentId} />
 
       {/* Course practice */}
       {hasCourses ? (
