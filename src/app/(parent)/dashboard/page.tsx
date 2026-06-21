@@ -30,13 +30,13 @@ export default function DashboardPage() {
         <div className="flex gap-3">
           <Link
             href="/courses/import"
-            className="min-h-[56px] px-6 text-lg font-medium rounded-xl border-2 border-blue-600 text-blue-600 hover:bg-blue-50 transition-colors flex items-center"
+            className="min-h-[64px] px-6 text-lg font-medium rounded-xl border-2 border-blue-600 text-blue-600 hover:bg-blue-50 transition-colors flex items-center"
           >
             匯入新課程
           </Link>
           <Link
             href="/students/new"
-            className="min-h-[56px] px-6 text-lg font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-2"
+            className="min-h-[64px] px-6 text-lg font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-2"
           >
             <span className="text-2xl leading-none">+</span> 新增學生
           </Link>
