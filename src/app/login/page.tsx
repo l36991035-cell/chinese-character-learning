@@ -3,13 +3,27 @@ export const dynamic = 'force-dynamic'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
-import { signInWithGoogle } from '@/lib/firebase/auth'
+import { signInWithGoogle, handleGoogleRedirect } from '@/lib/firebase/auth'
 
 export default function LoginPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
   const [signingIn, setSigningIn] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace('/dashboard')
+      return
+    }
+    if (!loading) {
+      handleGoogleRedirect().then((u) => {
+        if (u) router.replace('/dashboard')
+      }).catch((err) => {
+        console.error(err)
+      })
+    }
+  }, [loading, router])
 
   useEffect(() => {
     if (!loading && user) {
@@ -22,11 +36,10 @@ export default function LoginPage() {
     setSigningIn(true)
     try {
       await signInWithGoogle()
-      router.replace('/dashboard')
+      // signInWithRedirect navigates away, so no code runs after this
     } catch (err) {
       setError('登入失敗，請再試一次。')
       console.error(err)
-    } finally {
       setSigningIn(false)
     }
   }
