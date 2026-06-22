@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getFirebaseAdmin, requireAuth } from '@/lib/firebase/admin'
 import { parseDocxCharacters } from '@/lib/docx/parser'
 import { parseXlsxCharacters } from '@/lib/xlsx/parser'
+import { parseDocCharacters } from '@/lib/doc/parser'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -24,8 +25,9 @@ export async function POST(request: NextRequest) {
 
   const isDocx = file.name.endsWith('.docx')
   const isXlsx = file.name.endsWith('.xlsx')
-  if (!isDocx && !isXlsx) {
-    return NextResponse.json({ success: false, error: '請上傳 Word（.docx）或 Excel（.xlsx）文件' }, { status: 400 })
+  const isDoc = file.name.endsWith('.doc')
+  if (!isDocx && !isXlsx && !isDoc) {
+    return NextResponse.json({ success: false, error: '請上傳 Word（.doc / .docx）或 Excel（.xlsx）文件' }, { status: 400 })
   }
 
   const arrayBuffer = await file.arrayBuffer()
@@ -37,7 +39,9 @@ export async function POST(request: NextRequest) {
 
   const parsedChars = isXlsx
     ? await parseXlsxCharacters(buffer)
-    : await parseDocxCharacters(buffer)
+    : isDoc
+      ? await parseDocCharacters(buffer)
+      : await parseDocxCharacters(buffer)
 
   if (parsedChars.length === 0) {
     await adminDb.collection('courses').doc(courseId).update({ status: 'error' })

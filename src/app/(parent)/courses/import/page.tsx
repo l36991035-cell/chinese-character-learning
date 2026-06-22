@@ -81,8 +81,8 @@ export default function ImportPage() {
   }
 
   function handleFileSelect(file: File) {
-    if (!file.name.endsWith('.docx') && !file.name.endsWith('.xlsx')) {
-      setUploadError('請上傳 Word（.docx）或 Excel（.xlsx）文件')
+    if (!file.name.endsWith('.docx') && !file.name.endsWith('.xlsx') && !file.name.endsWith('.doc')) {
+      setUploadError('請上傳 Word（.doc / .docx）或 Excel（.xlsx）文件')
       return
     }
     setSelectedFile(file)
@@ -268,7 +268,7 @@ export default function ImportPage() {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".docx,.xlsx"
+              accept=".doc,.docx,.xlsx"
               className="hidden"
               onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
             />
@@ -281,7 +281,7 @@ export default function ImportPage() {
             ) : (
               <div>
                 <p className="text-2xl mb-2">📂</p>
-                <p className="text-xl text-gray-500">拖曳 Word（.docx）或 Excel（.xlsx）至此，或點擊選擇檔案</p>
+                <p className="text-xl text-gray-500">拖曳 Word（.doc / .docx）或 Excel（.xlsx）至此，或點擊選擇檔案</p>
               </div>
             )}
           </div>
