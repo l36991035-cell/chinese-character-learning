@@ -1,10 +1,10 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase/client'
-import { updateStudent, linkCourseToStudent, unlinkCourseFromStudent, getStudentCourses } from '@/lib/firebase/students'
+import { updateStudent, deleteStudent, linkCourseToStudent, unlinkCourseFromStudent, getStudentCourses } from '@/lib/firebase/students'
 import { getCoursesByImporter, getCourse } from '@/lib/firebase/courses'
 import { getStudentStats } from '@/lib/firebase/practice-history'
 import { getWrongBook } from '@/lib/firebase/wrongbook'
@@ -37,6 +37,7 @@ const SEMESTER_LABEL: Record<1 | 2, string> = { 1: '上學期', 2: '下學期' }
 
 export default function StudentSettingsPage() {
   const params = useParams()
+  const router = useRouter()
   const studentId = params.studentId as string
   const { user } = useAuth()
 
@@ -123,6 +124,12 @@ export default function StudentSettingsPage() {
     } finally {
       setLinkingCourseId(null)
     }
+  }
+
+  async function handleDelete() {
+    if (!confirm(`確定要刪除學生「${student?.name}」嗎？此動作無法復原。`)) return
+    await deleteStudent(studentId)
+    router.push('/dashboard')
   }
 
   async function handleUnlinkCourse(courseId: string) {
@@ -300,6 +307,16 @@ export default function StudentSettingsPage() {
             )}
           </div>
         )}
+      </div>
+
+      {/* Delete student */}
+      <div className="mt-8 pt-6 border-t border-gray-200">
+        <button
+          onClick={handleDelete}
+          className="min-h-[64px] w-full text-xl font-semibold rounded-xl border-2 border-red-300 text-red-600 hover:bg-red-50 transition-colors"
+        >
+          刪除這位學生
+        </button>
       </div>
     </div>
   )
