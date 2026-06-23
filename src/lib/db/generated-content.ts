@@ -55,5 +55,55 @@ export async function generateAndSaveContent(
       idioms: [],
       rhetoric: [],
     },
+    status: 'ready',
+    generatedAt: Date.now(),
   })
+}
+
+export async function generateAndSaveCharacter(
+  characterId: string,
+  courseId: number,
+  character: string,
+  grade: number
+): Promise<void> {
+  await saveGeneratedContent({
+    characterId, courseId, grade, character,
+    vocabulary: '', vocabularyBopomofo: '',
+    sentence: '', sentenceBopomofo: '',
+    readingText: '',
+    extensions: {
+      confusableChars: [], wordFormation: [], semanticRelation: [],
+      multiPronunciation: [], synonyms: [], antonyms: [], idioms: [], rhetoric: [],
+    },
+    status: 'pending',
+  })
+
+  try {
+    const workerUrl = process.env.NEXT_PUBLIC_AI_WORKER_URL
+    const res = await fetch(`${workerUrl}/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ character, grade }),
+    })
+    const content = await res.json()
+    await saveGeneratedContent({
+      characterId, courseId, grade, character,
+      ...content,
+      status: 'ready',
+      generatedAt: Date.now(),
+    })
+  } catch (err) {
+    await saveGeneratedContent({
+      characterId, courseId, grade, character,
+      vocabulary: '', vocabularyBopomofo: '',
+      sentence: '', sentenceBopomofo: '',
+      readingText: '',
+      extensions: {
+        confusableChars: [], wordFormation: [], semanticRelation: [],
+        multiPronunciation: [], synonyms: [], antonyms: [], idioms: [], rhetoric: [],
+      },
+      status: 'error',
+      errorMessage: String(err),
+    })
+  }
 }

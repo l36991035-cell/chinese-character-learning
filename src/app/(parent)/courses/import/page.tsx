@@ -1,8 +1,9 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { createCourse, getCourse, updateCourseStatus } from '@/lib/db/courses'
+import { useCallback, useRef, useState } from 'react'
+import { createCourse, updateCourseStatus } from '@/lib/db/courses'
 import { saveCharacters } from '@/lib/db/characters'
+import { generateAndSaveCharacter } from '@/lib/db/generated-content'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import type { Publisher, Course, CourseStatus } from '@/types'
 import Link from 'next/link'
@@ -12,7 +13,6 @@ type UploadMode = 'file' | 'manual'
 
 const PUBLISHERS: Publisher[] = ['康軒', '南一', '翰林']
 const GRADES = [1, 2, 3, 4, 5, 6] as const
-const TERMINAL_STATUSES: CourseStatus[] = ['ready', 'error']
 
 interface FormState {
   publisher: Publisher
@@ -40,30 +40,10 @@ export default function ImportPage() {
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [courseStatus, setCourseStatus] = useState<CourseStatus | null>(null)
   const [characterCount, setCharacterCount] = useState<number>(0)
+  const [generatedCount, setGeneratedCount] = useState<number>(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const previewChars = [...new Set((manualText.match(/[一-鿿]/g) ?? []))]
-
-  // Polling for course status
-  useEffect(() => {
-    if (step !== 'processing' || !courseId) return
-
-    pollRef.current = setInterval(async () => {
-      const course = await getCourse(courseId)
-      if (!course) return
-      setCourseStatus(course.status)
-      setCharacterCount(course.characterCount)
-      if (TERMINAL_STATUSES.includes(course.status)) {
-        clearInterval(pollRef.current!)
-        setStep('done')
-      }
-    }, 3000)
-
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current)
-    }
-  }, [step, courseId])
 
   async function handleFormSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -95,6 +75,19 @@ export default function ImportPage() {
     if (file) handleFileSelect(file)
   }, [])
 
+  async function runAiGeneration(charIds: string[], parsedChars: Array<{ character: string }>, cId: number) {
+    for (let i = 0; i < parsedChars.length; i++) {
+      await generateAndSaveCharacter(charIds[i], cId, parsedChars[i].character, form.grade)
+      setGeneratedCount(i + 1)
+      if (i < parsedChars.length - 1) {
+        await new Promise(r => setTimeout(r, 6000))
+      }
+    }
+    await updateCourseStatus(cId, 'ready', { readyAt: Date.now() })
+    setCourseStatus('ready')
+    setStep('done')
+  }
+
   async function handleUpload() {
     if (!selectedFile || !courseId) return
     setUploading(true)
@@ -125,15 +118,20 @@ export default function ImportPage() {
         return
       }
 
-      await updateCourseStatus(courseId, 'parsing')
-      await saveCharacters(courseId, uniqueChars.map(c => ({ character: c })))
+      const parsedChars = uniqueChars.map(c => ({ character: c }))
+      const charIds = await saveCharacters(courseId, parsedChars)
       await updateCourseStatus(courseId, 'ai_generating', { characterCount: uniqueChars.length })
 
       setCourseStatus('ai_generating')
       setCharacterCount(uniqueChars.length)
+      setGeneratedCount(0)
       setStep('processing')
+
+      await runAiGeneration(charIds, parsedChars, courseId)
     } catch (err) {
       setUploadError('解析失敗：' + String(err))
+      if (courseId) await updateCourseStatus(courseId, 'error')
+    } finally {
       setUploading(false)
     }
   }
@@ -144,15 +142,20 @@ export default function ImportPage() {
     setUploadError(null)
 
     try {
-      await updateCourseStatus(courseId, 'parsing')
-      await saveCharacters(courseId, previewChars.map(c => ({ character: c })))
+      const parsedChars = previewChars.map(c => ({ character: c }))
+      const charIds = await saveCharacters(courseId, parsedChars)
       await updateCourseStatus(courseId, 'ai_generating', { characterCount: previewChars.length })
 
       setCourseStatus('ai_generating')
       setCharacterCount(previewChars.length)
+      setGeneratedCount(0)
       setStep('processing')
+
+      await runAiGeneration(charIds, parsedChars, courseId)
     } catch (err) {
       setUploadError('送出失敗：' + String(err))
+      if (courseId) await updateCourseStatus(courseId, 'error')
+    } finally {
       setUploading(false)
     }
   }
@@ -395,16 +398,14 @@ export default function ImportPage() {
             {courseStatus && <StatusBadge status={courseStatus} />}
           </div>
 
-          {courseStatus === 'ai_generating' && characterCount > 0 && (
-            <p className="text-lg text-gray-600">AI 生成中… 共 {characterCount} 個生字</p>
-          )}
-
           {step === 'processing' && (
-            <div className="flex gap-2 items-center">
-              <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0ms' }} />
-              <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '150ms' }} />
-              <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '300ms' }} />
-              <span className="text-lg text-gray-500 ml-2">每 3 秒自動更新</span>
+            <div>
+              <p className="text-lg text-gray-600">AI 生成中… {generatedCount} / {characterCount} 個生字</p>
+              <div className="flex gap-2 items-center mt-3">
+                <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
             </div>
           )}
 
