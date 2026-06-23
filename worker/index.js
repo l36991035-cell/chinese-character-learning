@@ -64,7 +64,11 @@ async function callGemini(apiKey, prompt) {
     }),
   })
   const data = await res.json()
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}'
+  if (!data.candidates || data.candidates.length === 0) {
+    const errMsg = data.error?.message ?? JSON.stringify(data)
+    throw new Error(`Gemini error: ${errMsg}`)
+  }
+  const text = data.candidates[0]?.content?.parts?.[0]?.text ?? '{}'
   return JSON.parse(text)
 }
 
@@ -85,7 +89,17 @@ export default {
       return new Response('Method Not Allowed', { status: 405, headers: corsHeaders })
     }
 
-    const { character, grade } = await request.json()
+    let body
+    try {
+      body = await request.json()
+    } catch {
+      return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const { character, grade } = body
     if (!character || !grade) {
       return new Response(JSON.stringify({ error: 'Missing character or grade' }), {
         status: 400,
@@ -94,19 +108,28 @@ export default {
     }
 
     const apiKey = env.GEMINI_API_KEY
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: 'GEMINI_API_KEY not configured' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
-    // Core content
-    const core = await callGemini(apiKey,
-      CONTENT_PROMPT.replace('{character}', character).replace(/{grade}/g, String(grade))
-    )
-
-    // 1s delay between two Gemini calls
-    await new Promise(r => setTimeout(r, 1000))
-
-    // Extension content
-    const extRaw = await callGemini(apiKey,
-      EXTENSION_PROMPT.replace('{character}', character).replace(/{grade}/g, String(grade))
-    )
+    let core, extRaw
+    try {
+      core = await callGemini(apiKey,
+        CONTENT_PROMPT.replace('{character}', character).replace(/{grade}/g, String(grade))
+      )
+      await new Promise(r => setTimeout(r, 1000))
+      extRaw = await callGemini(apiKey,
+        EXTENSION_PROMPT.replace('{character}', character).replace(/{grade}/g, String(grade))
+      )
+    } catch (err) {
+      return new Response(JSON.stringify({ error: String(err) }), {
+        status: 502,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     const extensions = {
       confusableChars: extRaw.confusableChars ?? [],

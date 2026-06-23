@@ -80,11 +80,15 @@ export async function generateAndSaveCharacter(
 
   try {
     const workerUrl = process.env.NEXT_PUBLIC_AI_WORKER_URL
-    const res = await fetch(`${workerUrl}/`, {
+    const res = await fetch(workerUrl!, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ character, grade }),
     })
+    if (!res.ok) {
+      const errText = await res.text()
+      throw new Error(`Worker ${res.status}: ${errText}`)
+    }
     const content = await res.json()
     await saveGeneratedContent({
       characterId, courseId, grade, character,
