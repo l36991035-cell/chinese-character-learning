@@ -159,13 +159,37 @@ export default function PracticePage() {
   if (phase === 'done') {
     const correct = results.filter((r) => r.isCorrect).length
     const total = results.length
+
+    if (total === 0) {
+      return (
+        <div className="flex flex-col gap-6 text-center py-12">
+          <h1 className="text-3xl font-bold text-gray-700">目前沒有可練習的生字</h1>
+          <p className="text-xl text-gray-500 leading-relaxed">
+            請到「管理設定」→「已選課程」→「+ 新增課程」，把課程連結到這位學生。
+          </p>
+          <button
+            onClick={() => router.push(`/students/settings?id=${studentId}`)}
+            className="min-h-[64px] text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+          >
+            去管理設定連結課程
+          </button>
+          <button
+            onClick={() => router.push(`/home?id=${studentId}`)}
+            className="min-h-[64px] text-xl font-semibold rounded-xl border-2 border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
+          >
+            回首頁
+          </button>
+        </div>
+      )
+    }
+
     return (
       <div className="flex flex-col gap-6 text-center py-12">
         <h1 className="text-4xl font-bold text-gray-800">本次練習完成！</h1>
         <p className="text-3xl font-semibold text-blue-600">
           答對 {correct} / {total} 題
         </p>
-        {total > 0 && correct < total && (
+        {correct < total && (
           <p className="text-xl text-amber-700">
             錯誤字已加入錯字本，下次繼續加油！
           </p>

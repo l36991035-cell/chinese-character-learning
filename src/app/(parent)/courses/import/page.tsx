@@ -412,17 +412,18 @@ export default function ImportPage() {
           {step === 'done' && courseStatus === 'ready' && (
             <div>
               <p className="text-xl text-green-700 font-semibold">完成！共 {characterCount} 個生字，AI 已生成延伸資料。</p>
-              <div className="flex gap-4 mt-6">
+              <p className="text-lg text-gray-500 mt-3">下一步：到學生的「管理設定」→「已選課程」→「+ 新增課程」，把這堂課連結給學生。</p>
+              <div className="flex flex-col gap-3 mt-6">
                 <Link
-                  href="/courses"
-                  className="min-h-[64px] flex-1 text-xl font-semibold rounded-xl border-2 border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center"
+                  href="/dashboard"
+                  className="min-h-[64px] text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center justify-center"
                 >
-                  查看所有課程
+                  回首頁（去連結學生）
                 </Link>
                 <Link
                   href="/courses/import"
                   onClick={() => { setStep('form'); setCourseId(null); setSelectedFile(null); setCourseStatus(null); setManualText('') }}
-                  className="min-h-[64px] flex-1 text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center justify-center"
+                  className="min-h-[64px] text-xl font-semibold rounded-xl border-2 border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center"
                 >
                   再匯入一堂課
                 </Link>
