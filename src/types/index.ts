@@ -1,5 +1,3 @@
-import { Timestamp } from 'firebase/firestore'
-
 // ─── Practice Mode ───────────────────────────────────────────────────────────
 
 export type PracticeMode = 'vocabulary' | 'sentence' | 'wrongbook' | 'extension'
@@ -9,69 +7,67 @@ export type PracticeMode = 'vocabulary' | 'sentence' | 'wrongbook' | 'extension'
 export type Publisher = '康軒' | '南一' | '翰林'
 export type CourseStatus = 'uploading' | 'parsing' | 'ai_generating' | 'ready' | 'error'
 
-// ─── User ────────────────────────────────────────────────────────────────────
-
-export interface User {
-  email: string
-  displayName: string
-  photoURL: string
-  createdAt: Timestamp
-}
-
 // ─── Student ─────────────────────────────────────────────────────────────────
 
 export interface Student {
-  parentId: string          // userId of parent
-  name: string              // 哥哥 / 妹妹
+  id?: number
+  name: string
   grade: 1 | 2 | 3 | 4 | 5 | 6
-  createdAt: Timestamp
+  createdAt: number  // Unix ms
   enabledExtensions: {
-    confusableChars: boolean      // 易混淆字 (grade 1+)
-    wordFormation: boolean        // 造詞 (grade 1+)
-    semanticRelation: boolean     // 找朋友 (grade 1+)
-    multiPronunciation: boolean   // 多音字 (grade 3+)
-    synonyms: boolean             // 同義詞 (grade 3+)
-    antonyms: boolean             // 反義詞 (grade 3+)
-    idioms: boolean               // 成語 (grade 5+)
-    rhetoric: boolean             // 修辭 (grade 5+)
+    confusableChars: boolean
+    wordFormation: boolean
+    semanticRelation: boolean
+    multiPronunciation: boolean
+    synonyms: boolean
+    antonyms: boolean
+    idioms: boolean
+    rhetoric: boolean
   }
 }
 
-// ─── StudentCourse (subcollection: students/{studentId}/courses/{courseId}) ──
+// ─── StudentCourse ────────────────────────────────────────────────────────────
 
 export interface StudentCourse {
-  linkedAt: Timestamp
-  selectedLessons: number[]   // [5, 6, 7] = 第五、六、七課
+  id?: number
+  studentId: number
+  courseId: number
+  linkedAt: number  // Unix ms
+  selectedLessons: number[]
 }
 
-// ─── WrongBookEntry (subcollection: students/{studentId}/wrongbook/{charId}) ─
+// ─── WrongBookEntry ───────────────────────────────────────────────────────────
 
 export interface WrongBookEntry {
+  id?: number
+  studentId: number
   characterId: string
   character: string
-  courseId: string
+  courseId: number
   grade: number
-  addedAt: Timestamp
+  addedAt: number         // Unix ms
   wrongCount: number
-  lastPracticedAt: Timestamp | null
+  lastPracticedAt: number | null  // Unix ms
 }
 
-// ─── PracticeHistory (subcollection: students/{studentId}/practice_history/) ─
+// ─── PracticeHistory ─────────────────────────────────────────────────────────
 
 export interface PracticeHistory {
+  id?: number
+  studentId: number
   characterId: string
   character: string
-  courseId: string
+  courseId: number
   sessionId: string
   practiceMode: PracticeMode
   isCorrect: boolean
-  practicedAt: Timestamp
+  practicedAt: number  // Unix ms
 }
 
-// ─── Course (/courses/{courseId}) ────────────────────────────────────────────
+// ─── Course ───────────────────────────────────────────────────────────────────
 
 export interface Course {
-  importedBy: string          // userId
+  id?: number
   publisher: Publisher
   grade: 1 | 2 | 3 | 4 | 5 | 6
   semester: 1 | 2
@@ -80,21 +76,22 @@ export interface Course {
   characterCount: number
   status: CourseStatus
   errorMessage?: string
-  importedAt: Timestamp
-  readyAt?: Timestamp
+  importedAt: number   // Unix ms
+  readyAt?: number     // Unix ms
 }
 
-// ─── Character (/characters/{charId}) ────────────────────────────────────────
+// ─── Character ────────────────────────────────────────────────────────────────
 
 export interface Character {
-  courseId: string
-  character: string           // '樹'
-  strokeCount: number | null  // 16, null if not visible in PDF
-  radical: string | null      // '木', null if not visible in PDF
-  order: number               // 1, 2, 3...
+  id?: string            // courseId_001 format
+  courseId: number
+  character: string
+  strokeCount: number | null
+  radical: string | null
+  order: number
 }
 
-// ─── Extensions (nested inside GeneratedContent) ─────────────────────────────
+// ─── Extensions ───────────────────────────────────────────────────────────────
 
 export interface Extensions {
   confusableChars: Array<{ char: string; explanation: string }>
@@ -107,20 +104,21 @@ export interface Extensions {
   rhetoric: Array<{ type: string; example: string }>
 }
 
-// ─── GeneratedContent (/generated_content/{charId}) ──────────────────────────
+// ─── GeneratedContent ────────────────────────────────────────────────────────
 
 export interface GeneratedContent {
+  id?: string            // same as characterId
   characterId: string
-  courseId: string
+  courseId: number
   grade: number
   character: string
-  vocabulary: string              // '大樹'
-  vocabularyBopomofo: string      // 'ㄉㄚˋ ㄕㄨˋ'
-  sentence: string                // '公園裡有一棵大樹。'
-  sentenceBopomofo: string        // 'ㄍㄨㄥ ㄩㄢˊ ㄌㄧˇ ㄧㄡˇ ㄧ ㄎㄜ ㄉㄚˋ ㄕㄨˋ。'
-  readingText: string             // 2–3 句朗讀文字
+  vocabulary: string
+  vocabularyBopomofo: string
+  sentence: string
+  sentenceBopomofo: string
+  readingText: string
   extensions: Extensions
   status: 'pending' | 'ready' | 'error'
   errorMessage?: string
-  generatedAt?: Timestamp
+  generatedAt?: number   // Unix ms
 }
