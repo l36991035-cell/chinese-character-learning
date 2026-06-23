@@ -33,15 +33,17 @@ export async function deleteStudent(id: number): Promise<void> {
 }
 
 export async function linkCourseToStudent(studentId: number, courseId: number, lessonNumber: number): Promise<void> {
-  const existing = await db.studentCourses
-    .where('[studentId+courseId]').equals([studentId, courseId]).first()
-  if (existing) {
-    await db.studentCourses.update(existing.id!, {
-      selectedLessons: [...new Set([...(existing.selectedLessons ?? []), lessonNumber])],
-    })
-  } else {
-    await db.studentCourses.add({ studentId, courseId, linkedAt: Date.now(), selectedLessons: [lessonNumber] })
-  }
+  await db.transaction('rw', db.studentCourses, async () => {
+    const existing = await db.studentCourses
+      .where('[studentId+courseId]').equals([studentId, courseId]).first()
+    if (existing) {
+      await db.studentCourses.update(existing.id!, {
+        selectedLessons: [...new Set([...(existing.selectedLessons ?? []), lessonNumber])],
+      })
+    } else {
+      await db.studentCourses.add({ studentId, courseId, linkedAt: Date.now(), selectedLessons: [lessonNumber] })
+    }
+  })
 }
 
 export async function unlinkCourseFromStudent(studentId: number, courseId: number): Promise<void> {
