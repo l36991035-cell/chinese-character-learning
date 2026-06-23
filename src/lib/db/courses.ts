@@ -30,4 +30,8 @@ export async function deleteCourse(id: number): Promise<void> {
     await db.generatedContent.bulkDelete(charIds)
     await db.studentCourses.where('courseId').equals(id).delete()
   })
+  await db.transaction('rw', db.wrongBook, db.practiceHistory, async () => {
+    await db.wrongBook.filter(e => e.courseId === id).delete()
+    await db.practiceHistory.where('courseId').equals(id).delete()
+  })
 }
