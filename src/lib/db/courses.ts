@@ -23,14 +23,12 @@ export async function updateCourseStatus(id: number, status: CourseStatus, extra
 }
 
 export async function deleteCourse(id: number): Promise<void> {
-  await db.transaction('rw', db.courses, db.characters, db.generatedContent, db.studentCourses, async () => {
+  await db.transaction('rw', [db.courses, db.characters, db.generatedContent, db.studentCourses, db.wrongBook, db.practiceHistory], async () => {
     await db.courses.delete(id)
     const charIds = (await db.characters.where('courseId').equals(id).toArray()).map(c => c.id!)
     await db.characters.where('courseId').equals(id).delete()
     await db.generatedContent.bulkDelete(charIds)
     await db.studentCourses.where('courseId').equals(id).delete()
-  })
-  await db.transaction('rw', db.wrongBook, db.practiceHistory, async () => {
     await db.wrongBook.filter(e => e.courseId === id).delete()
     await db.practiceHistory.where('courseId').equals(id).delete()
   })

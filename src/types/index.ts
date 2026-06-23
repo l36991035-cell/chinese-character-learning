@@ -83,7 +83,7 @@ export interface Course {
 // ─── Character ────────────────────────────────────────────────────────────────
 
 export interface Character {
-  id?: string            // courseId_001 format
+  id?: string            // courseId_0001 format
   courseId: number
   character: string
   strokeCount: number | null

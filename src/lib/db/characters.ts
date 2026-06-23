@@ -3,7 +3,7 @@ import type { Character } from '@/types'
 
 export async function saveCharacters(courseId: number, chars: Array<{ character: string }>): Promise<string[]> {
   const records: Array<Character & { id: string }> = chars.map((c, i) => ({
-    id: `${courseId}_${String(i + 1).padStart(3, '0')}`,
+    id: `${courseId}_${String(i + 1).padStart(4, '0')}`,
     courseId,
     character: c.character,
     strokeCount: null,
