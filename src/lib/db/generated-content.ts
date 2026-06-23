@@ -12,3 +12,48 @@ export async function getGeneratedContent(characterId: string): Promise<Generate
 export async function getGeneratedContentByCourse(courseId: number): Promise<GeneratedContent[]> {
   return db.generatedContent.where('courseId').equals(courseId).toArray()
 }
+
+export async function generateAndSaveContent(
+  character: string,
+  grade: number,
+  courseId: number,
+  characterId: string
+): Promise<void> {
+  const workerUrl = process.env.NEXT_PUBLIC_AI_WORKER_URL
+  if (!workerUrl) throw new Error('NEXT_PUBLIC_AI_WORKER_URL is not set')
+
+  const res = await fetch(workerUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ character, grade }),
+  })
+
+  if (!res.ok) {
+    const errText = await res.text()
+    throw new Error(`Worker error ${res.status}: ${errText}`)
+  }
+
+  const data = await res.json()
+
+  await saveGeneratedContent({
+    characterId,
+    courseId,
+    grade,
+    character,
+    vocabulary: data.vocabulary ?? '',
+    vocabularyBopomofo: data.vocabularyBopomofo ?? '',
+    sentence: data.sentence ?? '',
+    sentenceBopomofo: data.sentenceBopomofo ?? '',
+    readingText: data.readingText ?? '',
+    extensions: data.extensions ?? {
+      confusableChars: [],
+      wordFormation: [],
+      semanticRelation: [],
+      multiPronunciation: [],
+      synonyms: [],
+      antonyms: [],
+      idioms: [],
+      rhetoric: [],
+    },
+  })
+}
