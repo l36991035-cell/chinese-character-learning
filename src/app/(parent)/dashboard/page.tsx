@@ -1,26 +1,23 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useAuth } from '@/hooks/useAuth'
-import { getStudentsByParent } from '@/lib/firebase/students'
-import { getStudentStats } from '@/lib/firebase/practice-history'
-import { getWrongBook } from '@/lib/firebase/wrongbook'
+import { getAllStudents } from '@/lib/db/students'
+import { getPracticeHistory } from '@/lib/db/practice-history'
+import { getWrongBook } from '@/lib/db/wrongbook'
 import { StudentCardSkeleton } from '@/components/ui/Skeleton'
 import type { Student } from '@/types'
 
-type StudentWithId = Student & { id: string }
+type StudentWithId = Student & { id: number }
 
 export default function DashboardPage() {
-  const { user } = useAuth()
   const [students, setStudents] = useState<StudentWithId[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!user) return
-    getStudentsByParent(user.uid)
+    getAllStudents()
       .then(setStudents)
       .finally(() => setLoading(false))
-  }, [user])
+  }, [])
 
   if (loading) {
     return (
@@ -87,10 +84,11 @@ function StudentCard({ student }: { student: StudentWithId }) {
 
   useEffect(() => {
     Promise.all([
-      getStudentStats(student.id),
+      getPracticeHistory(student.id),
       getWrongBook(student.id),
-    ]).then(([stats, wb]) => {
-      setLearnedCount(stats.learnedCount)
+    ]).then(([history, wb]) => {
+      const learnedIds = new Set(history.filter(h => h.isCorrect).map(h => h.characterId))
+      setLearnedCount(learnedIds.size)
       setWrongCount(wb.length)
     })
   }, [student.id])
@@ -115,13 +113,13 @@ function StudentCard({ student }: { student: StudentWithId }) {
 
       <div className="flex gap-3">
         <Link
-          href={`/${student.id}/home`}
+          href={`/home?id=${student.id}`}
           className="flex-1 min-h-[64px] text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center justify-center"
         >
           開始練習
         </Link>
         <Link
-          href={`/students/${student.id}`}
+          href={`/students/settings?id=${student.id}`}
           className="min-h-[64px] px-5 text-lg font-medium rounded-xl border-2 border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center"
         >
           管理設定

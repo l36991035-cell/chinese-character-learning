@@ -1,20 +1,16 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { doc, getDoc } from 'firebase/firestore'
-import { db } from '@/lib/firebase/client'
-import { updateStudent, deleteStudent, linkCourseToStudent, unlinkCourseFromStudent, getStudentCourses } from '@/lib/firebase/students'
-import { getCoursesByImporter, getCourse } from '@/lib/firebase/courses'
-import { getStudentStats } from '@/lib/firebase/practice-history'
-import { getWrongBook } from '@/lib/firebase/wrongbook'
-import { useAuth } from '@/hooks/useAuth'
+import { getStudent, updateStudent, deleteStudent, linkCourseToStudent, unlinkCourseFromStudent, getStudentCourses } from '@/lib/db/students'
+import { getAllCourses, getCourse } from '@/lib/db/courses'
+import { getPracticeHistory } from '@/lib/db/practice-history'
+import { getWrongBook } from '@/lib/db/wrongbook'
 import { WrongBookList } from '@/components/ui/WrongBookList'
-import type { Student, Course, WrongBookEntry } from '@/types'
+import type { Student, Course, WrongBookEntry, StudentCourse } from '@/types'
 
-type StudentWithId = Student & { id: string }
-type CourseWithId = Course & { id: string }
-interface LinkedCourse { courseId: string; selectedLessons: number[] }
+type StudentWithId = Student & { id: number }
+type CourseWithId = Course & { id: number }
 
 interface ExtensionMeta {
   key: keyof Student['enabledExtensions']
@@ -36,52 +32,52 @@ const EXTENSIONS: ExtensionMeta[] = [
 const SEMESTER_LABEL: Record<1 | 2, string> = { 1: '上學期', 2: '下學期' }
 
 export default function StudentSettingsPage() {
-  const params = useParams()
+  const searchParams = useSearchParams()
   const router = useRouter()
-  const studentId = params.studentId as string
-  const { user } = useAuth()
+  const studentId = Number(searchParams.get('id'))
 
   const [student, setStudent] = useState<StudentWithId | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [stats, setStats] = useState<{ learnedCount: number; accuracy: number } | null>(null)
-  const [wrongBook, setWrongBook] = useState<Array<WrongBookEntry & { id: string }>>([])
-
+  const [wrongBook, setWrongBook] = useState<Array<WrongBookEntry & { id: number }>>([])
 
   // Course linking state
-  const [linkedCourses, setLinkedCourses] = useState<LinkedCourse[]>([])
-  const [linkedCourseDetails, setLinkedCourseDetails] = useState<Record<string, CourseWithId>>({})
+  const [linkedCourses, setLinkedCourses] = useState<StudentCourse[]>([])
+  const [linkedCourseDetails, setLinkedCourseDetails] = useState<Record<number, CourseWithId>>({})
   const [allReadyCourses, setAllReadyCourses] = useState<CourseWithId[]>([])
   const [showAddCourse, setShowAddCourse] = useState(false)
-  const [linkingCourseId, setLinkingCourseId] = useState<string | null>(null)
+  const [linkingCourseId, setLinkingCourseId] = useState<number | null>(null)
 
   useEffect(() => {
-    async function fetchStudent() {
-      const [snap, statsData, wb] = await Promise.all([
-        getDoc(doc(db, 'students', studentId)),
-        getStudentStats(studentId),
+    async function fetchData() {
+      const [studentData, history, wb] = await Promise.all([
+        getStudent(studentId),
+        getPracticeHistory(studentId),
         getWrongBook(studentId),
       ])
-      if (snap.exists()) {
-        setStudent({ id: snap.id, ...snap.data() } as StudentWithId)
+      if (studentData) {
+        setStudent(studentData as StudentWithId)
       }
-      setStats(statsData)
-      setWrongBook(wb)
+      const learnedIds = new Set(history.filter(h => h.isCorrect).map(h => h.characterId))
+      const correct = history.filter(h => h.isCorrect).length
+      const accuracy = history.length > 0 ? Math.round((correct / history.length) * 100) : 0
+      setStats({ learnedCount: learnedIds.size, accuracy })
+      setWrongBook(wb as Array<WrongBookEntry & { id: number }>)
       setLoading(false)
     }
-    fetchStudent()
+    fetchData()
   }, [studentId])
 
   useEffect(() => {
     async function fetchLinkedCourses() {
       const linked = await getStudentCourses(studentId)
       setLinkedCourses(linked)
-      // Fetch course details for each linked course
-      const details: Record<string, CourseWithId> = {}
+      const details: Record<number, CourseWithId> = {}
       await Promise.all(
         linked.map(async ({ courseId }) => {
           const course = await getCourse(courseId)
-          if (course) details[courseId] = { id: courseId, ...course }
+          if (course) details[courseId] = course as CourseWithId
         })
       )
       setLinkedCourseDetails(details)
@@ -90,11 +86,10 @@ export default function StudentSettingsPage() {
   }, [studentId])
 
   useEffect(() => {
-    if (!user) return
-    getCoursesByImporter(user.uid).then((courses) => {
-      setAllReadyCourses(courses.filter((c) => c.status === 'ready'))
+    getAllCourses().then((courses) => {
+      setAllReadyCourses(courses.filter((c) => c.status === 'ready') as CourseWithId[])
     })
-  }, [user])
+  }, [])
 
   async function handleToggle(key: keyof Student['enabledExtensions']) {
     if (!student) return
@@ -117,7 +112,7 @@ export default function StudentSettingsPage() {
       await linkCourseToStudent(studentId, course.id, course.lessonNumber)
       setLinkedCourses((prev) => [
         ...prev,
-        { courseId: course.id, selectedLessons: [course.lessonNumber] },
+        { studentId, courseId: course.id, linkedAt: Date.now(), selectedLessons: [course.lessonNumber] },
       ])
       setLinkedCourseDetails((prev) => ({ ...prev, [course.id]: course }))
       setShowAddCourse(false)
@@ -132,7 +127,7 @@ export default function StudentSettingsPage() {
     router.push('/dashboard')
   }
 
-  async function handleUnlinkCourse(courseId: string) {
+  async function handleUnlinkCourse(courseId: number) {
     await unlinkCourseFromStudent(studentId, courseId)
     setLinkedCourses((prev) => prev.filter((lc) => lc.courseId !== courseId))
     setLinkedCourseDetails((prev) => {

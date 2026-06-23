@@ -3,14 +3,14 @@ import type { Character, GeneratedContent, WrongBookEntry } from '@/types'
 export interface PracticeItem {
   characterId: string
   character: string
-  courseId: string
+  courseId: number
   grade: number
   content: GeneratedContent
   isFromWrongBook: boolean
 }
 
 export function buildPracticeSession(
-  wrongBookItems: Array<WrongBookEntry & { id: string }>,
+  wrongBookItems: Array<WrongBookEntry & { id: number }>,
   courseCharacters: Array<{ char: Character & { id: string }; content: GeneratedContent }>,
   grade: number
 ): PracticeItem[] {
@@ -34,9 +34,9 @@ export function buildPracticeSession(
 
   // Then regular course characters (skip those already in wrong book)
   for (const { char, content } of courseCharacters) {
-    if (!wrongBookCharIds.has(char.id)) {
+    if (!wrongBookCharIds.has(char.id!)) {
       items.push({
-        characterId: char.id,
+        characterId: char.id!,
         character: char.character,
         courseId: char.courseId,
         grade,

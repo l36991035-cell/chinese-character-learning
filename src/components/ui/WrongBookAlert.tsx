@@ -1,7 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation'
 
-export function WrongBookAlert({ count, studentId }: { count: number; studentId: string }) {
+export function WrongBookAlert({ count, studentId }: { count: number; studentId: number }) {
   const router = useRouter()
   if (count === 0) return null
 
@@ -11,7 +11,7 @@ export function WrongBookAlert({ count, studentId }: { count: number; studentId:
         你有 {count} 個錯字，先來練習！
       </p>
       <button
-        onClick={() => router.push(`/${studentId}/practice?mode=wrongbook`)}
+        onClick={() => router.push(`/practice?id=${studentId}&mode=wrongbook`)}
         className="min-h-[64px] flex items-center justify-center text-xl font-semibold rounded-xl bg-amber-400 text-white hover:bg-amber-500 transition-colors"
       >
         練習錯字本

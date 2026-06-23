@@ -1,15 +1,12 @@
 'use client'
-export const dynamic = 'force-dynamic'
 
 import { useEffect, useState } from 'react'
-import { useParams, useSearchParams, useRouter } from 'next/navigation'
-import { doc, getDoc } from 'firebase/firestore'
-import { db } from '@/lib/firebase/client'
-import { getStudentCourses } from '@/lib/firebase/students'
-import { getCharactersByCourse } from '@/lib/firebase/characters'
-import { getGeneratedContent } from '@/lib/firebase/generated-content'
-import { getWrongBook, addToWrongBook, removeFromWrongBook } from '@/lib/firebase/wrongbook'
-import { recordPractice } from '@/lib/firebase/practice-history'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { getStudent, getStudentCourses } from '@/lib/db/students'
+import { getCharactersByCourse } from '@/lib/db/characters'
+import { getGeneratedContent } from '@/lib/db/generated-content'
+import { getWrongBook, addToWrongBook, removeFromWrongBook } from '@/lib/db/wrongbook'
+import { recordPractice } from '@/lib/db/practice-history'
 import { buildPracticeSession } from '@/lib/utils/session-builder'
 import { usePracticeSession } from '@/hooks/usePracticeSession'
 import { AudioPlayer } from '@/components/ui/AudioPlayer'
@@ -20,16 +17,15 @@ import type { Character } from '@/types'
 type CourseChar = { char: Character & { id: string }; content: GeneratedContent }
 
 export default function PracticePage() {
-  const params = useParams()
   const searchParams = useSearchParams()
   const router = useRouter()
-  const studentId = params.studentId as string
+  const studentId = Number(searchParams.get('id'))
   const mode = (searchParams.get('mode') ?? 'course') as 'wrongbook' | 'course'
 
   const [loading, setLoading] = useState(true)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const [student, setStudent] = useState<(Student & { id: string }) | null>(null)
-  const [wrongBookItems, setWrongBookItems] = useState<Array<WrongBookEntry & { id: string }>>([])
+  const [student, setStudent] = useState<(Student & { id: number }) | null>(null)
+  const [wrongBookItems, setWrongBookItems] = useState<Array<WrongBookEntry & { id: number }>>([])
 
   const {
     phase,
@@ -48,14 +44,13 @@ export default function PracticePage() {
       setLoading(true)
       try {
         // Load student
-        const snap = await getDoc(doc(db, 'students', studentId))
-        if (!snap.exists()) return
-        const studentData = { id: snap.id, ...snap.data() } as Student & { id: string }
-        setStudent(studentData)
+        const studentData = await getStudent(studentId)
+        if (!studentData) return
+        setStudent(studentData as Student & { id: number })
 
         // Load wrong book
         const wb = await getWrongBook(studentId)
-        setWrongBookItems(wb)
+        setWrongBookItems(wb as Array<WrongBookEntry & { id: number }>)
 
         // Load course characters + generated content
         const linkedCourses = await getStudentCourses(studentId)
@@ -66,9 +61,9 @@ export default function PracticePage() {
             const chars = await getCharactersByCourse(courseId)
             await Promise.all(
               chars.map(async (char) => {
-                const content = await getGeneratedContent(char.id)
+                const content = await getGeneratedContent(char.id!)
                 if (content && content.status === 'ready') {
-                  courseChars.push({ char, content })
+                  courseChars.push({ char: char as Character & { id: string }, content })
                 }
               })
             )
@@ -79,12 +74,11 @@ export default function PracticePage() {
         courseChars.sort((a, b) => a.char.order - b.char.order)
 
         if (mode === 'wrongbook') {
-          // For wrongbook mode: only include wrong book items that have course content
-          const items = buildPracticeSession(wb, courseChars, studentData.grade)
+          const items = buildPracticeSession(wb as Array<WrongBookEntry & { id: number }>, courseChars, studentData.grade)
           const wrongOnly = items.filter((item) => item.isFromWrongBook)
           startSession(wrongOnly.length > 0 ? wrongOnly : items)
         } else {
-          const items = buildPracticeSession(wb, courseChars, studentData.grade)
+          const items = buildPracticeSession(wb as Array<WrongBookEntry & { id: number }>, courseChars, studentData.grade)
           startSession(items)
         }
       } finally {
@@ -100,7 +94,8 @@ export default function PracticePage() {
     setSubmitError(null)
     const practiceMode = currentIndex % 2 === 0 ? 'vocabulary' : 'sentence'
     try {
-      await recordPractice(studentId, {
+      await recordPractice({
+        studentId,
         characterId: currentItem.characterId,
         character: currentItem.character,
         courseId: currentItem.courseId,
@@ -124,7 +119,8 @@ export default function PracticePage() {
     setSubmitError(null)
     const practiceMode = currentIndex % 2 === 0 ? 'vocabulary' : 'sentence'
     try {
-      await recordPractice(studentId, {
+      await recordPractice({
+        studentId,
         characterId: currentItem.characterId,
         character: currentItem.character,
         courseId: currentItem.courseId,
@@ -132,7 +128,8 @@ export default function PracticePage() {
         practiceMode,
         isCorrect: false,
       })
-      await addToWrongBook(studentId, {
+      await addToWrongBook({
+        studentId,
         characterId: currentItem.characterId,
         character: currentItem.character,
         courseId: currentItem.courseId,
@@ -174,7 +171,7 @@ export default function PracticePage() {
           </p>
         )}
         <button
-          onClick={() => router.push(`/${studentId}/home`)}
+          onClick={() => router.push(`/home?id=${studentId}`)}
           className="min-h-[64px] text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
         >
           回首頁
@@ -188,7 +185,7 @@ export default function PracticePage() {
       <div className="flex flex-col gap-6 text-center py-12">
         <p className="text-2xl text-gray-500">沒有可練習的字</p>
         <button
-          onClick={() => router.push(`/${studentId}/home`)}
+          onClick={() => router.push(`/home?id=${studentId}`)}
           className="min-h-[64px] text-xl font-semibold rounded-xl border-2 border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
         >
           回首頁
@@ -205,7 +202,7 @@ export default function PracticePage() {
     : currentItem.content.sentenceBopomofo
   const modeLabel = isVocabMode ? '詞語模式' : '短句模式'
 
-  // Hint: show first character of the target character (e.g., first stroke/radical hint)
+  // Hint: show first character of the target character
   const hintChar = currentItem.character[0] ?? '_'
 
   return (

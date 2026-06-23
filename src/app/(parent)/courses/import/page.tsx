@@ -1,11 +1,8 @@
 'use client'
-export const dynamic = 'force-dynamic'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { getIdToken } from 'firebase/auth'
-import { auth } from '@/lib/firebase/client'
-import { useAuth } from '@/hooks/useAuth'
-import { createCourse, getCourse } from '@/lib/firebase/courses'
+import { createCourse, getCourse, updateCourseStatus } from '@/lib/db/courses'
+import { saveCharacters } from '@/lib/db/characters'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import type { Publisher, Course, CourseStatus } from '@/types'
 import Link from 'next/link'
@@ -26,9 +23,8 @@ interface FormState {
 }
 
 export default function ImportPage() {
-  const { user } = useAuth()
   const [step, setStep] = useState<Step>('form')
-  const [uploadMode, setUploadMode] = useState<UploadMode>('file')
+  const [uploadMode, setUploadMode] = useState<UploadMode>('manual')
   const [form, setForm] = useState<FormState>({
     publisher: '康軒',
     grade: 1,
@@ -36,7 +32,7 @@ export default function ImportPage() {
     lessonNumber: 1,
     lessonTitle: '',
   })
-  const [courseId, setCourseId] = useState<string | null>(null)
+  const [courseId, setCourseId] = useState<number | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [manualText, setManualText] = useState('')
   const [dragging, setDragging] = useState(false)
@@ -71,10 +67,8 @@ export default function ImportPage() {
 
   async function handleFormSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!user) return
     const lessonTitle = form.lessonTitle.trim() || `第${form.lessonNumber}課`
     const id = await createCourse({
-      importedBy: user.uid,
       publisher: form.publisher,
       grade: form.grade,
       semester: form.semester,
@@ -86,8 +80,8 @@ export default function ImportPage() {
   }
 
   function handleFileSelect(file: File) {
-    if (!file.name.endsWith('.docx') && !file.name.endsWith('.xlsx') && !file.name.endsWith('.doc')) {
-      setUploadError('請上傳 Word（.doc / .docx）或 Excel（.xlsx）文件')
+    if (!file.name.endsWith('.docx') && !file.name.endsWith('.xlsx')) {
+      setUploadError('請上傳 Word（.docx）或 Excel（.xlsx）文件')
       return
     }
     setSelectedFile(file)
@@ -107,33 +101,39 @@ export default function ImportPage() {
     setUploadError(null)
 
     try {
-      const currentUser = auth.currentUser
-      if (!currentUser) {
-        setUploadError('請先登入')
+      const arrayBuffer = await selectedFile.arrayBuffer()
+      let uniqueChars: string[] = []
+
+      if (selectedFile.name.endsWith('.docx')) {
+        const mammoth = await import('mammoth')
+        const result = await mammoth.extractRawText({ arrayBuffer })
+        uniqueChars = [...new Set((result.value.match(/[一-鿿]/g) ?? []))]
+      } else if (selectedFile.name.endsWith('.xlsx')) {
+        const XLSX = await import('xlsx')
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' })
+        let allText = ''
+        for (const sheetName of workbook.SheetNames) {
+          const sheet = workbook.Sheets[sheetName]
+          allText += XLSX.utils.sheet_to_csv(sheet)
+        }
+        uniqueChars = [...new Set((allText.match(/[一-鿿]/g) ?? []))]
+      }
+
+      if (uniqueChars.length === 0) {
+        setUploadError('未能從文件中讀取到漢字，請確認文件內容')
         setUploading(false)
         return
       }
-      const idToken = await getIdToken(currentUser)
 
-      const fd = new FormData()
-      fd.append('file', selectedFile)
-      fd.append('courseId', courseId)
+      await updateCourseStatus(courseId, 'parsing')
+      await saveCharacters(courseId, uniqueChars.map(c => ({ character: c })))
+      await updateCourseStatus(courseId, 'ai_generating', { characterCount: uniqueChars.length })
 
-      const res = await fetch('/api/pdf', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${idToken}` },
-        body: fd,
-      })
-      const json = await res.json() as { success: boolean; error?: string }
-      if (!json.success) {
-        setUploadError(json.error ?? '上傳失敗，請再試一次')
-        setUploading(false)
-        return
-      }
-      setCourseStatus('parsing')
+      setCourseStatus('ai_generating')
+      setCharacterCount(uniqueChars.length)
       setStep('processing')
     } catch (err) {
-      setUploadError('上傳失敗：' + String(err))
+      setUploadError('解析失敗：' + String(err))
       setUploading(false)
     }
   }
@@ -144,29 +144,12 @@ export default function ImportPage() {
     setUploadError(null)
 
     try {
-      const currentUser = auth.currentUser
-      if (!currentUser) {
-        setUploadError('請先登入')
-        setUploading(false)
-        return
-      }
-      const idToken = await getIdToken(currentUser)
+      await updateCourseStatus(courseId, 'parsing')
+      await saveCharacters(courseId, previewChars.map(c => ({ character: c })))
+      await updateCourseStatus(courseId, 'ai_generating', { characterCount: previewChars.length })
 
-      const res = await fetch('/api/manual', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${idToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ courseId, text: manualText }),
-      })
-      const json = await res.json() as { success: boolean; error?: string }
-      if (!json.success) {
-        setUploadError(json.error ?? '送出失敗，請再試一次')
-        setUploading(false)
-        return
-      }
-      setCourseStatus('parsing')
+      setCourseStatus('ai_generating')
+      setCharacterCount(previewChars.length)
       setStep('processing')
     } catch (err) {
       setUploadError('送出失敗：' + String(err))
@@ -370,7 +353,7 @@ export default function ImportPage() {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".doc,.docx,.xlsx"
+                  accept=".docx,.xlsx"
                   className="hidden"
                   onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
                 />
@@ -395,7 +378,7 @@ export default function ImportPage() {
                 disabled={!selectedFile || uploading}
                 className="min-h-[64px] text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {uploading ? '上傳中…' : '開始上傳解析'}
+                {uploading ? '解析中…' : '開始解析'}
               </button>
             </>
           )}

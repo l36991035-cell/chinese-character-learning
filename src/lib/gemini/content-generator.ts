@@ -59,7 +59,7 @@ Rules:
 export async function generateCharacterContent(
   character: string,
   grade: number,
-  courseId: string,
+  courseId: number,
   characterId: string
 ): Promise<Omit<GeneratedContent, 'status' | 'generatedAt' | 'errorMessage'>> {
   const genAI = getGemini()

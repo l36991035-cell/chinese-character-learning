@@ -1,12 +1,11 @@
 import type { WrongBookEntry } from '@/types'
-import { Timestamp } from 'firebase/firestore'
 
-function formatDate(ts: Timestamp | null): string {
+function formatDate(ts: number | null): string {
   if (!ts) return '—'
-  return ts.toDate().toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' })
+  return new Date(ts).toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' })
 }
 
-export function WrongBookList({ items }: { items: Array<WrongBookEntry & { id: string }> }) {
+export function WrongBookList({ items }: { items: Array<WrongBookEntry & { id: number }> }) {
   if (items.length === 0) {
     return <p className="text-lg text-gray-400">錯字本目前是空的</p>
   }

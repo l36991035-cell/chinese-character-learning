@@ -1,28 +1,24 @@
 'use client'
-export const dynamic = 'force-dynamic'
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useAuth } from '@/hooks/useAuth'
-import { getCoursesByImporter } from '@/lib/firebase/courses'
+import { getAllCourses } from '@/lib/db/courses'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import type { Course } from '@/types'
 
-type CourseWithId = Course & { id: string }
+type CourseWithId = Course & { id: number }
 
 const SEMESTER_LABEL: Record<1 | 2, string> = { 1: '上學期', 2: '下學期' }
 
 export default function CoursesPage() {
-  const { user } = useAuth()
   const [courses, setCourses] = useState<CourseWithId[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!user) return
-    getCoursesByImporter(user.uid)
+    getAllCourses()
       .then(setCourses)
       .finally(() => setLoading(false))
-  }, [user])
+  }, [])
 
   if (loading) {
     return <p className="text-lg text-gray-500">載入中…</p>

@@ -2,8 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth } from '@/hooks/useAuth'
-import { createStudent } from '@/lib/firebase/students'
+import { createStudent } from '@/lib/db/students'
 import type { Student } from '@/types'
 
 const GRADE_OPTIONS: { value: Student['grade']; label: string }[] = [
@@ -16,7 +15,6 @@ const GRADE_OPTIONS: { value: Student['grade']; label: string }[] = [
 ]
 
 export default function NewStudentPage() {
-  const { user } = useAuth()
   const router = useRouter()
   const [name, setName] = useState('')
   const [grade, setGrade] = useState<Student['grade']>(1)
@@ -25,7 +23,6 @@ export default function NewStudentPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!user) return
     if (!name.trim()) {
       setError('請輸入學生姓名')
       return
@@ -33,7 +30,7 @@ export default function NewStudentPage() {
     setError(null)
     setSubmitting(true)
     try {
-      await createStudent(user.uid, name.trim(), grade)
+      await createStudent(name.trim(), grade)
       router.replace('/dashboard')
     } catch (err) {
       setError('新增失敗，請再試一次。')

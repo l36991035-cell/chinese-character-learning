@@ -1,13 +1,11 @@
 'use client'
-export const dynamic = 'force-dynamic'
 
-import { useParams, useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 
 export default function SummaryPage() {
-  const params = useParams()
   const searchParams = useSearchParams()
   const router = useRouter()
-  const studentId = params.studentId as string
+  const studentId = Number(searchParams.get('id'))
 
   const correct = Number(searchParams.get('correct') ?? 0)
   const total = Number(searchParams.get('total') ?? 0)
@@ -32,13 +30,13 @@ export default function SummaryPage() {
 
       <div className="flex flex-col gap-4">
         <button
-          onClick={() => router.push(`/${studentId}/home`)}
+          onClick={() => router.push(`/home?id=${studentId}`)}
           className="min-h-[64px] text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
         >
           回首頁
         </button>
         <button
-          onClick={() => router.push(`/${studentId}/extension`)}
+          onClick={() => router.push(`/extension?id=${studentId}`)}
           className="min-h-[64px] text-xl font-medium rounded-xl border-2 border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
         >
           查看延伸學習

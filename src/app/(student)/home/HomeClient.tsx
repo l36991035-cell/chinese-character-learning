@@ -1,24 +1,21 @@
 'use client'
-export const dynamic = 'force-dynamic'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { doc, getDoc } from 'firebase/firestore'
-import { db } from '@/lib/firebase/client'
-import { getStudentCourses } from '@/lib/firebase/students'
+import { getStudent, getStudentCourses } from '@/lib/db/students'
 import { useWrongBook } from '@/hooks/useWrongBook'
 import { WrongBookAlert } from '@/components/ui/WrongBookAlert'
 import { Skeleton } from '@/components/ui/Skeleton'
 import type { Student } from '@/types'
 
 export default function StudentHomePage() {
-  const params = useParams()
+  const searchParams = useSearchParams()
   const router = useRouter()
-  const studentId = params.studentId as string
+  const studentId = Number(searchParams.get('id'))
 
   const [loading, setLoading] = useState(true)
-  const [student, setStudent] = useState<(Student & { id: string }) | null>(null)
+  const [student, setStudent] = useState<(Student & { id: number }) | null>(null)
   const [hasCourses, setHasCourses] = useState(false)
 
   const { items: wrongBook } = useWrongBook(studentId)
@@ -26,12 +23,12 @@ export default function StudentHomePage() {
   useEffect(() => {
     async function load() {
       try {
-        const [snap, linkedCourses] = await Promise.all([
-          getDoc(doc(db, 'students', studentId)),
+        const [studentData, linkedCourses] = await Promise.all([
+          getStudent(studentId),
           getStudentCourses(studentId),
         ])
-        if (snap.exists()) {
-          setStudent({ id: snap.id, ...snap.data() } as Student & { id: string })
+        if (studentData) {
+          setStudent(studentData as Student & { id: number })
         }
         setHasCourses(linkedCourses.length > 0)
       } finally {
@@ -77,7 +74,7 @@ export default function StudentHomePage() {
       {/* Course practice */}
       {hasCourses ? (
         <button
-          onClick={() => router.push(`/${studentId}/practice?mode=course`)}
+          onClick={() => router.push(`/practice?id=${studentId}&mode=course`)}
           className="min-h-[64px] flex items-center justify-center text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
         >
           開始課文練習
@@ -90,7 +87,7 @@ export default function StudentHomePage() {
 
       {/* Extension learning */}
       <Link
-        href={`/${studentId}/extension`}
+        href={`/extension?id=${studentId}`}
         className="min-h-[64px] flex items-center justify-center text-xl font-medium rounded-xl border-2 border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
       >
         查看延伸學習
