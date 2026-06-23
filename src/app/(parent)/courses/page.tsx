@@ -26,6 +26,9 @@ export default function CoursesPage() {
 
   return (
     <div>
+      <Link href="/dashboard" className="inline-block mb-6 text-lg text-blue-600 hover:underline">
+        ← 回到首頁
+      </Link>
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-gray-800">課程管理</h1>
         <Link
