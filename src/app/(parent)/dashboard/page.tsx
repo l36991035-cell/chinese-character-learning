@@ -43,10 +43,10 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-bold text-gray-800">我的學生</h1>
         <div className="flex gap-3">
           <Link
-            href="/courses/import"
+            href="/courses"
             className="min-h-[64px] px-6 text-lg font-medium rounded-xl border-2 border-blue-600 text-blue-600 hover:bg-blue-50 transition-colors flex items-center"
           >
-            匯入新課程
+            課程管理
           </Link>
           <Link
             href="/students/new"
