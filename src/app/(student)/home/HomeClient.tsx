@@ -62,6 +62,13 @@ export default function StudentHomePage() {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Back to dashboard */}
+      <div>
+        <Link href="/dashboard" className="inline-flex items-center min-h-[48px] text-lg text-blue-600 hover:underline">
+          ← 回首頁
+        </Link>
+      </div>
+
       {/* Header */}
       <div className="text-center py-6">
         <h1 className="text-4xl font-bold text-gray-800">{student.name}</h1>

@@ -24,6 +24,7 @@ export default function PracticePage() {
 
   const [loading, setLoading] = useState(true)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [showExitConfirm, setShowExitConfirm] = useState(false)
   const [student, setStudent] = useState<(Student & { id: number }) | null>(null)
   const [wrongBookItems, setWrongBookItems] = useState<Array<WrongBookEntry & { id: number }>>([])
 
@@ -231,14 +232,44 @@ export default function PracticePage() {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Exit confirmation dialog */}
+      {showExitConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
+          <div className="bg-white rounded-2xl p-8 flex flex-col gap-6 w-full max-w-sm shadow-xl">
+            <h2 className="text-2xl font-bold text-gray-800 text-center">確定要離開嗎？</h2>
+            <p className="text-lg text-gray-500 text-center">本次練習紀錄不會儲存。</p>
+            <button
+              onClick={() => router.push(`/home?id=${studentId}`)}
+              className="min-h-[64px] text-xl font-semibold rounded-xl bg-red-500 text-white hover:bg-red-600 transition-colors"
+            >
+              離開練習
+            </button>
+            <button
+              onClick={() => setShowExitConfirm(false)}
+              className="min-h-[64px] text-xl font-semibold rounded-xl border-2 border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
+            >
+              繼續練習
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Progress */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => setShowExitConfirm(true)}
+          className="text-lg text-blue-600 hover:underline"
+        >
+          ← 離開
+        </button>
+        <span className="text-base text-gray-400">
+          {currentItem.isFromWrongBook ? '📕 錯字本' : '📗 課文'}
+        </span>
+      </div>
       <div className="flex items-center justify-between">
         <p className="text-xl text-gray-600">
           第 {currentIndex + 1} / {totalItems} 題
         </p>
-        <span className="text-base text-gray-400">
-          {currentItem.isFromWrongBook ? '📕 錯字本' : '📗 課文'}
-        </span>
       </div>
 
       {/* Progress bar */}
