@@ -25,6 +25,8 @@ export default function PracticePage() {
   const [loading, setLoading] = useState(true)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
+  const [hasLinkedCourses, setHasLinkedCourses] = useState(false)
+  const [hasErrorChars, setHasErrorChars] = useState(false)
   const [student, setStudent] = useState<(Student & { id: number }) | null>(null)
   const [wrongBookItems, setWrongBookItems] = useState<Array<WrongBookEntry & { id: number }>>([])
 
@@ -55,7 +57,9 @@ export default function PracticePage() {
 
         // Load course characters + generated content
         const linkedCourses = await getStudentCourses(studentId)
+        setHasLinkedCourses(linkedCourses.length > 0)
         const courseChars: CourseChar[] = []
+        let errorCount = 0
 
         await Promise.all(
           linkedCourses.map(async ({ courseId }) => {
@@ -65,11 +69,14 @@ export default function PracticePage() {
                 const content = await getGeneratedContent(char.id!)
                 if (content && content.status === 'ready') {
                   courseChars.push({ char: char as Character & { id: string }, content })
+                } else if (content && content.status === 'error') {
+                  errorCount++
                 }
               })
             )
           })
         )
+        setHasErrorChars(errorCount > 0)
 
         // Sort by course order
         courseChars.sort((a, b) => a.char.order - b.char.order)
@@ -162,18 +169,40 @@ export default function PracticePage() {
     const total = results.length
 
     if (total === 0) {
+      const isAiError = hasLinkedCourses && hasErrorChars
+      const isNotLinked = !hasLinkedCourses
       return (
         <div className="flex flex-col gap-6 text-center py-12">
           <h1 className="text-3xl font-bold text-gray-700">目前沒有可練習的生字</h1>
-          <p className="text-xl text-gray-500 leading-relaxed">
-            請到「管理設定」→「已選課程」→「+ 新增課程」，把課程連結到這位學生。
-          </p>
-          <button
-            onClick={() => router.push(`/students/settings?id=${studentId}`)}
-            className="min-h-[64px] text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-          >
-            去管理設定連結課程
-          </button>
+          {isAiError ? (
+            <>
+              <p className="text-xl text-gray-500 leading-relaxed">
+                課程已連結，但生字的 AI 內容尚未完成生成。<br />請到「課程管理」點選「重新生成」。
+              </p>
+              <button
+                onClick={() => router.push('/courses')}
+                className="min-h-[64px] text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+              >
+                去課程管理重新生成
+              </button>
+            </>
+          ) : isNotLinked ? (
+            <>
+              <p className="text-xl text-gray-500 leading-relaxed">
+                請到「管理設定」→「已選課程」→「+ 新增課程」，把課程連結到這位學生。
+              </p>
+              <button
+                onClick={() => router.push(`/students/settings?id=${studentId}`)}
+                className="min-h-[64px] text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+              >
+                去管理設定連結課程
+              </button>
+            </>
+          ) : (
+            <p className="text-xl text-gray-500 leading-relaxed">
+              請先匯入課程並連結到這位學生。
+            </p>
+          )}
           <button
             onClick={() => router.push(`/home?id=${studentId}`)}
             className="min-h-[64px] text-xl font-semibold rounded-xl border-2 border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
