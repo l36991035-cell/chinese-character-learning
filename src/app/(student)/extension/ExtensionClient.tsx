@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { getPracticeHistory } from '@/lib/db/practice-history'
+import { getStudentCourses } from '@/lib/db/students'
+import { getCharactersByCourse } from '@/lib/db/characters'
 import { getGeneratedContent } from '@/lib/db/generated-content'
 import { ExtensionPanel } from '@/components/ui/ExtensionPanel'
 import type { GeneratedContent } from '@/types'
@@ -21,26 +22,30 @@ export default function ExtensionPage() {
   useEffect(() => {
     async function load() {
       try {
-        const history = await getPracticeHistory(studentId)
+        const linkedCourses = await getStudentCourses(studentId)
 
-        const todayStart = new Date()
-        todayStart.setHours(0, 0, 0, 0)
-        const todayHistory = history.filter(h => h.practicedAt >= todayStart.getTime())
+        const allChars: CharContent[] = []
+        await Promise.all(
+          linkedCourses.map(async ({ courseId }) => {
+            const chars = await getCharactersByCourse(courseId)
+            await Promise.all(
+              chars.map(async (char) => {
+                const content = await getGeneratedContent(char.id!)
+                if (content && content.status === 'ready') {
+                  allChars.push({ character: char.character, content })
+                }
+              })
+            )
+          })
+        )
 
-        const seen = new Set<string>()
-        const uniqueCharIds: string[] = []
-        for (const h of todayHistory) {
-          if (!seen.has(h.characterId)) {
-            seen.add(h.characterId)
-            uniqueCharIds.push(h.characterId)
-          }
-        }
+        // Sort by course order (courseId then char order)
+        allChars.sort((a, b) => {
+          if (a.content.courseId !== b.content.courseId) return a.content.courseId - b.content.courseId
+          return a.content.characterId.localeCompare(b.content.characterId)
+        })
 
-        const results = await Promise.all(uniqueCharIds.map((id) => getGeneratedContent(id)))
-        const contents: CharContent[] = results
-          .filter((c): c is NonNullable<typeof c> => c !== undefined && c.status === 'ready')
-          .map((c) => ({ character: c!.character, content: c! }))
-        setCharContents(contents)
+        setCharContents(allChars)
       } finally {
         setLoading(false)
       }
@@ -70,13 +75,13 @@ export default function ExtensionPage() {
 
       {charContents.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed border-gray-300 p-12 text-center">
-          <p className="text-xl text-gray-500">今天還沒有練習紀錄</p>
-          <p className="text-lg text-gray-400 mt-2">完成練習後再來查看延伸學習！</p>
+          <p className="text-xl text-gray-500">目前沒有延伸學習內容</p>
+          <p className="text-lg text-gray-400 mt-2">請先連結課程，並確認 AI 內容已生成。</p>
           <button
             onClick={() => router.push(`/home?id=${studentId}`)}
             className="mt-6 min-h-[64px] px-8 text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
           >
-            去練習
+            回首頁
           </button>
         </div>
       ) : (
@@ -85,11 +90,11 @@ export default function ExtensionPage() {
             <p className="text-xl text-gray-500">
               第 {currentIndex + 1} / {charContents.length} 個生字
             </p>
-            <div className="flex gap-1">
+            <div className="flex flex-wrap gap-1 justify-end max-w-[60%]">
               {charContents.map((_, i) => (
                 <div
                   key={i}
-                  className={`h-2 w-6 rounded-full transition-all ${i === currentIndex ? 'bg-blue-500' : 'bg-gray-200'}`}
+                  className={`h-2 w-4 rounded-full transition-all ${i === currentIndex ? 'bg-blue-500' : 'bg-gray-200'}`}
                 />
               ))}
             </div>
