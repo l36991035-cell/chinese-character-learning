@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { getStudent } from '@/lib/db/students'
 import { getPracticeHistory } from '@/lib/db/practice-history'
 import { getGeneratedContent } from '@/lib/db/generated-content'
 import { ExtensionPanel } from '@/components/ui/ExtensionPanel'
-import type { Student, GeneratedContent } from '@/types'
+import type { GeneratedContent } from '@/types'
 
 type CharContent = { character: string; content: GeneratedContent }
 
@@ -16,27 +15,18 @@ export default function ExtensionPage() {
   const studentId = Number(searchParams.get('id'))
 
   const [loading, setLoading] = useState(true)
-  const [student, setStudent] = useState<(Student & { id: number }) | null>(null)
   const [charContents, setCharContents] = useState<CharContent[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
 
   useEffect(() => {
     async function load() {
       try {
-        const [studentData, history] = await Promise.all([
-          getStudent(studentId),
-          getPracticeHistory(studentId),
-        ])
+        const history = await getPracticeHistory(studentId)
 
-        if (!studentData) return
-        setStudent(studentData as Student & { id: number })
-
-        // Get today's practice entries
         const todayStart = new Date()
         todayStart.setHours(0, 0, 0, 0)
         const todayHistory = history.filter(h => h.practicedAt >= todayStart.getTime())
 
-        // Deduplicate characterIds from today's practice
         const seen = new Set<string>()
         const uniqueCharIds: string[] = []
         for (const h of todayHistory) {
@@ -46,7 +36,6 @@ export default function ExtensionPage() {
           }
         }
 
-        // Load generated content for all characters in parallel
         const results = await Promise.all(uniqueCharIds.map((id) => getGeneratedContent(id)))
         const contents: CharContent[] = results
           .filter((c): c is NonNullable<typeof c> => c !== undefined && c.status === 'ready')
@@ -92,7 +81,6 @@ export default function ExtensionPage() {
         </div>
       ) : (
         <>
-          {/* 進度 */}
           <div className="flex items-center justify-between">
             <p className="text-xl text-gray-500">
               第 {currentIndex + 1} / {charContents.length} 個生字
@@ -107,25 +95,20 @@ export default function ExtensionPage() {
             </div>
           </div>
 
-          {/* 目前這個字的延伸內容 */}
-          {student && (
-            <ExtensionPanel
-              key={charContents[currentIndex].content.characterId}
-              character={charContents[currentIndex].character}
-              bopomofo={charContents[currentIndex].content.vocabulary
-                ? charContents[currentIndex].content.vocabularyBopomofo?.split(' ')[
-                    charContents[currentIndex].content.vocabulary.indexOf(charContents[currentIndex].character)
-                  ]
-                : undefined}
-              definition={charContents[currentIndex].content.definition}
-              radical={charContents[currentIndex].content.radical}
-              strokeCount={charContents[currentIndex].content.strokeCount}
-              extensions={charContents[currentIndex].content.extensions}
-              enabledExtensions={student.enabledExtensions}
-            />
-          )}
+          <ExtensionPanel
+            key={charContents[currentIndex].content.characterId}
+            character={charContents[currentIndex].character}
+            bopomofo={charContents[currentIndex].content.vocabulary
+              ? charContents[currentIndex].content.vocabularyBopomofo?.split(' ')[
+                  charContents[currentIndex].content.vocabulary.indexOf(charContents[currentIndex].character)
+                ]
+              : undefined}
+            definition={charContents[currentIndex].content.definition}
+            radical={charContents[currentIndex].content.radical}
+            strokeCount={charContents[currentIndex].content.strokeCount}
+            extensions={charContents[currentIndex].content.extensions}
+          />
 
-          {/* 上一個 / 下一個 */}
           <div className="flex gap-4">
             <button
               onClick={() => setCurrentIndex(i => i - 1)}

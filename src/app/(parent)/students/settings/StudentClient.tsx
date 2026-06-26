@@ -12,23 +12,6 @@ import type { Student, Course, WrongBookEntry, StudentCourse } from '@/types'
 type StudentWithId = Student & { id: number }
 type CourseWithId = Course & { id: number }
 
-interface ExtensionMeta {
-  key: keyof Student['enabledExtensions']
-  label: string
-  minGrade: number
-}
-
-const EXTENSIONS: ExtensionMeta[] = [
-  { key: 'confusableChars', label: '易混淆字', minGrade: 1 },
-  { key: 'wordFormation', label: '造詞', minGrade: 1 },
-  { key: 'semanticRelation', label: '找朋友', minGrade: 1 },
-  { key: 'multiPronunciation', label: '多音字', minGrade: 3 },
-  { key: 'synonyms', label: '同義詞', minGrade: 3 },
-  { key: 'antonyms', label: '反義詞', minGrade: 3 },
-  { key: 'idioms', label: '成語', minGrade: 5 },
-  { key: 'rhetoric', label: '修辭', minGrade: 5 },
-]
-
 const SEMESTER_LABEL: Record<1 | 2, string> = { 1: '上學期', 2: '下學期' }
 
 export default function StudentSettingsPage() {
@@ -38,7 +21,6 @@ export default function StudentSettingsPage() {
 
   const [student, setStudent] = useState<StudentWithId | null>(null)
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
   const [stats, setStats] = useState<{ learnedCount: number; accuracy: number } | null>(null)
   const [wrongBook, setWrongBook] = useState<Array<WrongBookEntry & { id: number }>>([])
 
@@ -90,21 +72,6 @@ export default function StudentSettingsPage() {
       setAllReadyCourses(courses.filter((c) => c.status === 'ready') as CourseWithId[])
     })
   }, [])
-
-  async function handleToggle(key: keyof Student['enabledExtensions']) {
-    if (!student) return
-    const updated: Student['enabledExtensions'] = {
-      ...student.enabledExtensions,
-      [key]: !student.enabledExtensions[key],
-    }
-    setStudent({ ...student, enabledExtensions: updated })
-    setSaving(true)
-    try {
-      await updateStudent(studentId, { enabledExtensions: updated })
-    } finally {
-      setSaving(false)
-    }
-  }
 
   async function handleLinkCourse(course: CourseWithId) {
     setLinkingCourseId(course.id)
@@ -186,42 +153,6 @@ export default function StudentSettingsPage() {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-6">
         <h2 className="text-xl font-semibold text-gray-800 mb-6">錯字本</h2>
         <WrongBookList items={wrongBook} />
-      </div>
-
-      {/* Extension toggles */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-800">延伸學習設定</h2>
-          {saving && <span className="text-base text-gray-400">儲存中…</span>}
-        </div>
-
-        <div className="flex flex-col gap-4">
-          {EXTENSIONS.map(({ key, label, minGrade }) => {
-            const available = student.grade >= minGrade
-            return (
-              <label
-                key={key}
-                className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-colors cursor-pointer ${
-                  available
-                    ? 'border-gray-200 hover:border-blue-300'
-                    : 'border-gray-100 opacity-50 cursor-not-allowed'
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  className="w-6 h-6 rounded accent-blue-600"
-                  checked={student.enabledExtensions[key]}
-                  disabled={!available}
-                  onChange={() => available && handleToggle(key)}
-                />
-                <span className="text-lg text-gray-800">{label}</span>
-                {!available && (
-                  <span className="ml-auto text-base text-gray-400">{minGrade} 年級以上</span>
-                )}
-              </label>
-            )
-          })}
-        </div>
       </div>
 
       {/* Linked courses */}

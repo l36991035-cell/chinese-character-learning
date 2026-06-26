@@ -1,4 +1,4 @@
-import type { Extensions, Student } from '@/types'
+import type { Extensions } from '@/types'
 
 interface ExtensionPanelProps {
   character: string
@@ -7,7 +7,6 @@ interface ExtensionPanelProps {
   radical?: string | null
   strokeCount?: number | null
   extensions: Extensions
-  enabledExtensions: Student['enabledExtensions']
 }
 
 export function ExtensionPanel({
@@ -17,7 +16,6 @@ export function ExtensionPanel({
   radical,
   strokeCount,
   extensions,
-  enabledExtensions,
 }: ExtensionPanelProps) {
   return (
     <div className="flex flex-col gap-4">
@@ -45,36 +43,34 @@ export function ExtensionPanel({
       )}
 
       {/* 同義字 + 相反字 */}
-      {(enabledExtensions.synonyms || enabledExtensions.antonyms) && (
-        (extensions.synonyms.length > 0 || extensions.antonyms.length > 0) && (
-          <section className="bg-white rounded-2xl border border-gray-200 p-5">
-            <h3 className="text-lg font-semibold text-gray-700 mb-3">🔄 同義字 / 相反字</h3>
-            {extensions.synonyms.length > 0 && (
-              <div className="mb-3">
-                <p className="text-sm text-gray-500 mb-2">同義字</p>
-                <div className="flex flex-wrap gap-2">
-                  {extensions.synonyms.map((w, i) => (
-                    <span key={i} className="px-3 py-1 bg-purple-50 text-purple-700 rounded-lg text-base font-medium">{w}</span>
-                  ))}
-                </div>
+      {(extensions.synonyms.length > 0 || extensions.antonyms.length > 0) && (
+        <section className="bg-white rounded-2xl border border-gray-200 p-5">
+          <h3 className="text-lg font-semibold text-gray-700 mb-3">🔄 同義字 / 相反字</h3>
+          {extensions.synonyms.length > 0 && (
+            <div className="mb-3">
+              <p className="text-sm text-gray-500 mb-2">同義字</p>
+              <div className="flex flex-wrap gap-2">
+                {extensions.synonyms.map((w, i) => (
+                  <span key={i} className="px-3 py-1 bg-purple-50 text-purple-700 rounded-lg text-base font-medium">{w}</span>
+                ))}
               </div>
-            )}
-            {extensions.antonyms.length > 0 && (
-              <div>
-                <p className="text-sm text-gray-500 mb-2">相反字</p>
-                <div className="flex flex-wrap gap-2">
-                  {extensions.antonyms.map((w, i) => (
-                    <span key={i} className="px-3 py-1 bg-orange-50 text-orange-700 rounded-lg text-base font-medium">{w}</span>
-                  ))}
-                </div>
+            </div>
+          )}
+          {extensions.antonyms.length > 0 && (
+            <div>
+              <p className="text-sm text-gray-500 mb-2">相反字</p>
+              <div className="flex flex-wrap gap-2">
+                {extensions.antonyms.map((w, i) => (
+                  <span key={i} className="px-3 py-1 bg-orange-50 text-orange-700 rounded-lg text-base font-medium">{w}</span>
+                ))}
               </div>
-            )}
-          </section>
-        )
+            </div>
+          )}
+        </section>
       )}
 
       {/* 長得很像的字 */}
-      {enabledExtensions.confusableChars && extensions.confusableChars.length > 0 && (
+      {extensions.confusableChars.length > 0 && (
         <section className="bg-white rounded-2xl border border-gray-200 p-5">
           <h3 className="text-lg font-semibold text-gray-700 mb-3">👀 長得很像的字</h3>
           <div className="flex flex-col gap-3">
@@ -89,7 +85,7 @@ export function ExtensionPanel({
       )}
 
       {/* 成語 */}
-      {enabledExtensions.idioms && extensions.idioms.length > 0 && (
+      {extensions.idioms.length > 0 && (
         <section className="bg-white rounded-2xl border border-gray-200 p-5">
           <h3 className="text-lg font-semibold text-gray-700 mb-3">🏮 成語</h3>
           <div className="flex flex-col gap-4">
