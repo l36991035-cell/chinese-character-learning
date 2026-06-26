@@ -112,6 +112,14 @@ export default function ExtensionPage() {
             <ExtensionPanel
               key={charContents[currentIndex].content.characterId}
               character={charContents[currentIndex].character}
+              bopomofo={charContents[currentIndex].content.vocabulary
+                ? charContents[currentIndex].content.vocabularyBopomofo?.split(' ')[
+                    charContents[currentIndex].content.vocabulary.indexOf(charContents[currentIndex].character)
+                  ]
+                : undefined}
+              definition={charContents[currentIndex].content.definition}
+              radical={charContents[currentIndex].content.radical}
+              strokeCount={charContents[currentIndex].content.strokeCount}
               extensions={charContents[currentIndex].content.extensions}
               enabledExtensions={student.enabledExtensions}
             />

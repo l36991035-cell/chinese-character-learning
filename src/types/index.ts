@@ -117,6 +117,9 @@ export interface GeneratedContent {
   sentence: string
   sentenceBopomofo: string
   readingText: string
+  definition?: string
+  radical?: string | null
+  strokeCount?: number | null
   extensions: Extensions
   status: 'pending' | 'ready' | 'error'
   errorMessage?: string

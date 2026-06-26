@@ -1,80 +1,86 @@
-const CONTENT_PROMPT = `You are a Taiwanese elementary school Chinese teacher creating learning materials.
+const COMBINED_PROMPT = `You are a Taiwanese elementary school Chinese teacher creating learning materials.
 
 Target character: {character}
 Student grade: {grade} (1-6, where 1 is easiest)
 
-Generate learning content for this character suitable for grade {grade} students.
-Use Traditional Chinese (繁體中文) only.
-Use Bopomofo (注音符號) for phonetic annotation.
+Generate ALL learning content for this character in ONE response. Use Traditional Chinese (繁體中文) only. Use Bopomofo (注音符號) for phonetic annotation.
 
-Return ONLY valid JSON:
+Return ONLY valid JSON with NO extra text. Example format (for character "火"):
 {
-  "vocabulary": "大樹",
-  "vocabularyBopomofo": "ㄉㄚˋ ㄕㄨˋ",
-  "sentence": "公園裡有一棵大樹。",
-  "sentenceBopomofo": "ㄍㄨㄥ ㄩㄢˊ ㄌㄧˇ ㄧㄡˇ ㄧ ㄎㄜ ㄉㄚˋ ㄕㄨˋ。",
-  "readingText": "公園裡有一棵大樹。大樹的葉子是綠色的。小朋友喜歡在大樹下玩。"
+  "vocabulary": "火車",
+  "vocabularyBopomofo": "ㄏㄨㄛˇ ㄔㄜ",
+  "sentence": "火車跑得很快。",
+  "sentenceBopomofo": "ㄏㄨㄛˇ ㄔㄜ ㄆㄠˇ ㄉㄜ˙ ㄏㄣˇ ㄎㄨㄞˋ。",
+  "readingText": "火車跑得很快。火車可以載很多人。我喜歡坐火車。",
+  "radical": "火",
+  "strokeCount": 4,
+  "definition": "物質燃燒時產生的光和熱。如：「火焰」。",
+  "confusableChars": [{ "char": "水", "explanation": "「火」是熱的，「水」是冷的" }],
+  "wordFormation": ["火車", "火山", "火花", "大火", "火焰"],
+  "semanticRelation": ["熱", "光", "燃燒", "煙"],
+  "multiPronunciation": [],
+  "synonyms": [],
+  "antonyms": [],
+  "idioms": [{ "idiom": "火上加油", "meaning": "比喻使情況更加嚴重或激烈。" }],
+  "rhetoric": []
 }
 
-Rules:
+Now generate the actual content for the target character "{character}". Do NOT copy the example above.
+
+Rules for core fields:
 - vocabulary: 2–3 characters containing the target character, common and age-appropriate
 - vocabularyBopomofo: exact Bopomofo with tones for each syllable, space-separated
 - sentence: 10–20 characters, simple grammar for grade {grade}
 - sentenceBopomofo: exact Bopomofo for the full sentence
-- readingText: 2–3 simple sentences forming a coherent passage`
+- readingText: 2–3 simple sentences forming a coherent passage
+- radical: the correct Kangxi radical (部首) for this character, as a single Chinese character
+- strokeCount: total stroke count as a number
+- definition: 1–3 child-friendly meanings in Traditional Chinese, each ending with a short example. Format: "意思一。如：「例子」。意思二。如：「例子」。" Keep it concise and appropriate for grade {grade}.
 
-const EXTENSION_PROMPT = `You are a Taiwanese elementary school Chinese teacher.
-
-Target character: {character}
-Student grade: {grade}
-
-Generate extension learning content. Return ONLY the fields applicable for grade {grade}:
-- Grade 1+: confusableChars, wordFormation, semanticRelation
-- Grade 3+: additionally multiPronunciation, synonyms, antonyms
-- Grade 5+: additionally idioms, rhetoric
-
-Return ONLY valid JSON with the applicable fields. Omit fields not applicable for grade {grade}.
-
-Field formats:
-{
-  "confusableChars": [{ "char": "己", "explanation": "「己」自己，「已」已經" }],
-  "wordFormation": ["大樹", "樹木", "果樹"],
-  "semanticRelation": ["森林", "植物"],
-  "multiPronunciation": [{ "pronunciation": "ㄕㄨˋ", "meaning": "樹木", "example": "大樹" }],
-  "synonyms": ["樹木"],
-  "antonyms": [],
-  "idioms": [{ "idiom": "樹大根深", "meaning": "比喻根基穩固" }],
-  "rhetoric": [{ "type": "擬人", "example": "大樹張開雙臂歡迎小鳥。" }]
-}
-
-Rules:
-- confusableChars: max 3, only genuinely confusable
+Rules for extension fields (always include all fields, use empty array [] if not applicable):
+- confusableChars: array of objects {"char":"字","explanation":"說明"}, max 3 genuinely confusable characters
 - wordFormation: 4–6 common compound words
 - semanticRelation: 3–5 related words
-- Traditional Chinese only`
+- multiPronunciation: only if grade >= 3 AND character has multiple pronunciations, otherwise []
+- synonyms: only if grade >= 3, otherwise []
+- antonyms: only if grade >= 3, otherwise []
+- idioms: only if grade >= 5, array of objects {"idiom":"成語","meaning":"解釋"}, otherwise []
+- rhetoric: []`
 
-async function callGemini(apiKey, prompt) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`
-  const res = await fetch(url, {
+async function callClaude(apiKey, prompt) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'content-type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+    },
     body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { responseMimeType: 'application/json' },
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1500,
+      messages: [{ role: 'user', content: prompt }],
     }),
   })
   const data = await res.json()
-  if (!data.candidates || data.candidates.length === 0) {
+  if (!data.content || data.content.length === 0) {
     const errMsg = data.error?.message ?? JSON.stringify(data)
-    throw new Error(`Gemini error: ${errMsg}`)
+    throw new Error(`Claude error: ${errMsg}`)
   }
-  const text = data.candidates[0]?.content?.parts?.[0]?.text ?? '{}'
-  return JSON.parse(text)
+  const raw = data.content[0]?.text ?? '{}'
+  const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim()
+  return JSON.parse(cleaned)
+}
+
+function normalizeConfusableChars(arr) {
+  if (!Array.isArray(arr)) return []
+  return arr.map(item => {
+    if (typeof item === 'string') return { char: item, explanation: '' }
+    return item
+  })
 }
 
 export default {
   async fetch(request, env) {
-    // CORS headers for GitHub Pages
     const corsHeaders = {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -107,23 +113,18 @@ export default {
       })
     }
 
-    const apiKey = env.GEMINI_API_KEY
+    const apiKey = env.ANTHROPIC_API_KEY
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'GEMINI_API_KEY not configured' }), {
+      return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    let core, extRaw
+    let raw
     try {
-      core = await callGemini(apiKey,
-        CONTENT_PROMPT.replace('{character}', character).replace(/{grade}/g, String(grade))
-      )
-      await new Promise(r => setTimeout(r, 1000))
-      extRaw = await callGemini(apiKey,
-        EXTENSION_PROMPT.replace('{character}', character).replace(/{grade}/g, String(grade))
-      )
+      const prompt = COMBINED_PROMPT.replace(/{character}/g, character).replace(/{grade}/g, String(grade))
+      raw = await callClaude(apiKey, prompt)
     } catch (err) {
       return new Response(JSON.stringify({ error: String(err) }), {
         status: 502,
@@ -131,24 +132,25 @@ export default {
       })
     }
 
-    const extensions = {
-      confusableChars: extRaw.confusableChars ?? [],
-      wordFormation: extRaw.wordFormation ?? [],
-      semanticRelation: extRaw.semanticRelation ?? [],
-      multiPronunciation: grade >= 3 ? (extRaw.multiPronunciation ?? []) : [],
-      synonyms: grade >= 3 ? (extRaw.synonyms ?? []) : [],
-      antonyms: grade >= 3 ? (extRaw.antonyms ?? []) : [],
-      idioms: grade >= 5 ? (extRaw.idioms ?? []) : [],
-      rhetoric: grade >= 5 ? (extRaw.rhetoric ?? []) : [],
-    }
-
     const result = {
-      vocabulary: core.vocabulary ?? '',
-      vocabularyBopomofo: core.vocabularyBopomofo ?? '',
-      sentence: core.sentence ?? '',
-      sentenceBopomofo: core.sentenceBopomofo ?? '',
-      readingText: core.readingText ?? '',
-      extensions,
+      vocabulary: raw.vocabulary ?? '',
+      vocabularyBopomofo: raw.vocabularyBopomofo ?? '',
+      sentence: raw.sentence ?? '',
+      sentenceBopomofo: raw.sentenceBopomofo ?? '',
+      readingText: raw.readingText ?? '',
+      radical: raw.radical ?? null,
+      strokeCount: typeof raw.strokeCount === 'number' ? raw.strokeCount : null,
+      definition: raw.definition ?? '',
+      extensions: {
+        confusableChars: normalizeConfusableChars(raw.confusableChars),
+        wordFormation: raw.wordFormation ?? [],
+        semanticRelation: raw.semanticRelation ?? [],
+        multiPronunciation: grade >= 3 ? (raw.multiPronunciation ?? []) : [],
+        synonyms: grade >= 3 ? (raw.synonyms ?? []) : [],
+        antonyms: grade >= 3 ? (raw.antonyms ?? []) : [],
+        idioms: grade >= 5 ? (raw.idioms ?? []) : [],
+        rhetoric: [],
+      },
     }
 
     return new Response(JSON.stringify(result), {
