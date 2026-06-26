@@ -11,6 +11,7 @@ import { buildPracticeSession } from '@/lib/utils/session-builder'
 import { usePracticeSession } from '@/hooks/usePracticeSession'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { HandwritingCanvas } from '@/components/ui/HandwritingCanvas'
+import { StrokeOrderModal } from '@/components/ui/StrokeOrderModal'
 import type { Student, GeneratedContent, WrongBookEntry } from '@/types'
 import type { Character } from '@/types'
 
@@ -25,6 +26,7 @@ export default function PracticePage() {
   const [loading, setLoading] = useState(true)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
+  const [showStrokeOrder, setShowStrokeOrder] = useState(false)
   const [hasLinkedCourses, setHasLinkedCourses] = useState(false)
   const [hasErrorChars, setHasErrorChars] = useState(false)
   const [student, setStudent] = useState<(Student & { id: number }) | null>(null)
@@ -254,6 +256,13 @@ export default function PracticePage() {
   return (
     <div className="flex flex-col gap-6">
       {/* Exit confirmation dialog */}
+      {showStrokeOrder && (
+        <StrokeOrderModal
+          character={targetChar}
+          onClose={() => setShowStrokeOrder(false)}
+        />
+      )}
+
       {showExitConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
           <div className="bg-white rounded-2xl p-8 flex flex-col gap-6 w-full max-w-sm shadow-xl">
@@ -328,12 +337,20 @@ export default function PracticePage() {
 
           <HandwritingCanvas key={currentIndex} />
 
-          <button
-            onClick={revealAnswer}
-            className="min-h-[64px] w-full text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-          >
-            公布答案
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowStrokeOrder(true)}
+              className="min-h-[64px] flex-1 text-xl font-semibold rounded-xl border-2 border-blue-300 text-blue-600 hover:bg-blue-50 transition-colors"
+            >
+              ✏️ 看筆順
+            </button>
+            <button
+              onClick={revealAnswer}
+              className="min-h-[64px] flex-[2] text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+            >
+              公布答案
+            </button>
+          </div>
         </div>
       )}
 
