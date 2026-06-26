@@ -18,6 +18,7 @@ export default function ExtensionPage() {
   const [loading, setLoading] = useState(true)
   const [student, setStudent] = useState<(Student & { id: number }) | null>(null)
   const [charContents, setCharContents] = useState<CharContent[]>([])
+  const [currentIndex, setCurrentIndex] = useState(0)
 
   useEffect(() => {
     async function load() {
@@ -90,18 +91,50 @@ export default function ExtensionPage() {
           </button>
         </div>
       ) : (
-        <div className="flex flex-col gap-10">
-          {charContents.map(({ character, content }) => (
-            student && (
-              <ExtensionPanel
-                key={content.characterId}
-                character={character}
-                extensions={content.extensions}
-                enabledExtensions={student.enabledExtensions}
-              />
-            )
-          ))}
-        </div>
+        <>
+          {/* 進度 */}
+          <div className="flex items-center justify-between">
+            <p className="text-xl text-gray-500">
+              第 {currentIndex + 1} / {charContents.length} 個生字
+            </p>
+            <div className="flex gap-1">
+              {charContents.map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-2 w-6 rounded-full transition-all ${i === currentIndex ? 'bg-blue-500' : 'bg-gray-200'}`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* 目前這個字的延伸內容 */}
+          {student && (
+            <ExtensionPanel
+              key={charContents[currentIndex].content.characterId}
+              character={charContents[currentIndex].character}
+              extensions={charContents[currentIndex].content.extensions}
+              enabledExtensions={student.enabledExtensions}
+            />
+          )}
+
+          {/* 上一個 / 下一個 */}
+          <div className="flex gap-4">
+            <button
+              onClick={() => setCurrentIndex(i => i - 1)}
+              disabled={currentIndex === 0}
+              className="min-h-[64px] flex-1 text-xl font-semibold rounded-xl border-2 border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              ← 上一個
+            </button>
+            <button
+              onClick={() => setCurrentIndex(i => i + 1)}
+              disabled={currentIndex === charContents.length - 1}
+              className="min-h-[64px] flex-1 text-xl font-semibold rounded-xl border-2 border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              下一個 →
+            </button>
+          </div>
+        </>
       )}
 
       <button
