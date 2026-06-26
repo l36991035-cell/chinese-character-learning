@@ -17,6 +17,14 @@ export function ExtensionPanel({
   strokeCount,
   extensions,
 }: ExtensionPanelProps) {
+  const definitionLines = definition
+    ? definition.split('\n').map(s => s.trim()).filter(Boolean)
+    : []
+
+  // Handle old string[] format for wordFormation
+  const wordFormation = (extensions.wordFormation as Array<{ word: string; explanation: string } | string>)
+    .map(item => typeof item === 'string' ? { word: item, explanation: '' } : item)
+
   return (
     <div className="flex flex-col gap-4">
 
@@ -35,10 +43,52 @@ export function ExtensionPanel({
       </div>
 
       {/* 生字解釋 */}
-      {definition && (
+      {definitionLines.length > 0 && (
         <section className="bg-white rounded-2xl border border-gray-200 p-5">
           <h3 className="text-lg font-semibold text-gray-700 mb-3">📖 生字解釋</h3>
-          <p className="text-base text-gray-700 leading-relaxed">{definition}</p>
+          <div className="flex flex-col gap-2">
+            {definitionLines.map((line, i) => (
+              <p key={i} className="text-base text-gray-700 leading-relaxed">
+                {definitionLines.length > 1 && (
+                  <span className="font-semibold text-blue-600 mr-1">{i + 1}.</span>
+                )}
+                {line}
+              </p>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 造詞 */}
+      {wordFormation.length > 0 && (
+        <section className="bg-white rounded-2xl border border-gray-200 p-5">
+          <h3 className="text-lg font-semibold text-gray-700 mb-3">✏️ 造詞</h3>
+          <div className="flex flex-col gap-3">
+            {wordFormation.map((item, i) => (
+              <div key={i} className="flex flex-col gap-0.5">
+                <span className="text-xl font-bold text-blue-700">{item.word}</span>
+                {item.explanation && (
+                  <span className="text-base text-gray-600">{item.explanation}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 多音字 */}
+      {extensions.multiPronunciation.length > 0 && (
+        <section className="bg-white rounded-2xl border border-gray-200 p-5">
+          <h3 className="text-lg font-semibold text-gray-700 mb-3">🔊 多音字</h3>
+          <div className="flex flex-col gap-4">
+            {extensions.multiPronunciation.map((item, i) => (
+              <div key={i} className="flex flex-col gap-1">
+                <span className="text-2xl font-bold text-blue-600">{item.pronunciation}</span>
+                <span className="text-lg font-semibold text-gray-800">{item.example}</span>
+                <span className="text-base text-gray-600">{item.meaning}</span>
+              </div>
+            ))}
+          </div>
         </section>
       )}
 
@@ -69,10 +119,10 @@ export function ExtensionPanel({
         </section>
       )}
 
-      {/* 長得很像的字 */}
+      {/* 易混淆的字 */}
       {extensions.confusableChars.length > 0 && (
         <section className="bg-white rounded-2xl border border-gray-200 p-5">
-          <h3 className="text-lg font-semibold text-gray-700 mb-3">👀 長得很像的字</h3>
+          <h3 className="text-lg font-semibold text-gray-700 mb-3">👀 易混淆的字</h3>
           <div className="flex flex-col gap-3">
             {extensions.confusableChars.map((item, i) => (
               <div key={i} className="flex items-start gap-3">

@@ -95,7 +95,7 @@ export interface Character {
 
 export interface Extensions {
   confusableChars: Array<{ char: string; explanation: string }>
-  wordFormation: string[]
+  wordFormation: Array<{ word: string; explanation: string }>
   semanticRelation: string[]
   multiPronunciation: Array<{ pronunciation: string; meaning: string; example: string }>
   synonyms: string[]

@@ -14,14 +14,17 @@ Return ONLY valid JSON with NO extra text. Example format (for character "火"):
   "readingText": "火車跑得很快。火車可以載很多人。我喜歡坐火車。",
   "radical": "火",
   "strokeCount": 4,
-  "definition": "物質燃燒時產生的光和熱。如：「火焰」。",
-  "confusableChars": [{ "char": "水", "explanation": "「火」是熱的，「水」是冷的" }],
-  "wordFormation": ["火車", "火山", "火花", "大火", "火焰"],
-  "semanticRelation": ["熱", "光", "燃燒", "煙"],
+  "definition": "物質燃燒時產生的光和熱。如：「火焰」、「火光」。\n比喻激烈或緊急的情況。如：「火速」、「火爆」。",
+  "confusableChars": [{ "char": "水", "explanation": "「火」是熱的，「水」是冷的，兩者相反" }],
+  "wordFormation": [
+    { "word": "火車", "explanation": "一種用燃料或電力推動的大型交通工具" },
+    { "word": "火山", "explanation": "會噴出熔岩和氣體的山" },
+    { "word": "大火", "explanation": "很大的火災" }
+  ],
   "multiPronunciation": [],
-  "synonyms": [],
-  "antonyms": [],
-  "idioms": [{ "idiom": "火上加油", "meaning": "比喻使情況更加嚴重或激烈。" }],
+  "synonyms": ["燃燒", "火焰"],
+  "antonyms": ["水", "冰"],
+  "idioms": [{ "idiom": "火上加油", "meaning": "比喻使情況更加嚴重或激烈" }],
   "rhetoric": []
 }
 
@@ -35,16 +38,15 @@ Rules for core fields:
 - readingText: 2–3 simple sentences forming a coherent passage
 - radical: the correct Kangxi radical (部首) for this character, as a single Chinese character
 - strokeCount: total stroke count as a number
-- definition: 1–3 child-friendly meanings in Traditional Chinese, each ending with a short example. Format: "意思一。如：「例子」。意思二。如：「例子」。" Keep it concise and appropriate for grade {grade}.
+- definition: 1–3 child-friendly meanings in Traditional Chinese. Each meaning on its own line separated by \n. Format each line as: "意思說明。如：「例子一」、「例子二」。"
 
-Rules for extension fields (always include all fields, use empty array [] if not applicable):
-- confusableChars: array of objects {"char":"字","explanation":"說明"}, max 3 genuinely confusable characters
-- wordFormation: 4–6 common compound words
-- semanticRelation: 3–5 related words
-- multiPronunciation: only if grade >= 3 AND character has multiple pronunciations, otherwise []
-- synonyms: only if grade >= 3, otherwise []
-- antonyms: only if grade >= 3, otherwise []
-- idioms: only if grade >= 5, array of objects {"idiom":"成語","meaning":"解釋"}, otherwise []
+Rules for extension fields (always include ALL fields regardless of grade, use empty array [] only if truly not applicable):
+- confusableChars: array of {"char":"字","explanation":"說明"}，max 3 genuinely visually confusable characters. Always try to find at least one.
+- wordFormation: 3–5 common compound words as array of {"word":"詞語","explanation":"簡短說明這個詞的意思"}
+- multiPronunciation: if this character has multiple pronunciations, list each as {"pronunciation":"注音","meaning":"這個讀音的意思","example":"造詞例子"}，otherwise []
+- synonyms: 2–4 synonyms or similar-meaning words as string array. Always include if any exist.
+- antonyms: 2–4 antonyms or opposite-meaning words as string array. Always include if any exist.
+- idioms: 1–3 common Chinese idioms containing or related to this character as array of {"idiom":"成語","meaning":"成語的意思"}. Always try to find at least one.
 - rhetoric: []`
 
 async function callClaude(apiKey, prompt) {
@@ -69,6 +71,14 @@ async function callClaude(apiKey, prompt) {
   const raw = data.content[0]?.text ?? '{}'
   const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim()
   return JSON.parse(cleaned)
+}
+
+function normalizeWordFormation(arr) {
+  if (!Array.isArray(arr)) return []
+  return arr.map(item => {
+    if (typeof item === 'string') return { word: item, explanation: '' }
+    return item
+  })
 }
 
 function normalizeConfusableChars(arr) {
@@ -143,12 +153,12 @@ export default {
       definition: raw.definition ?? '',
       extensions: {
         confusableChars: normalizeConfusableChars(raw.confusableChars),
-        wordFormation: raw.wordFormation ?? [],
+        wordFormation: normalizeWordFormation(raw.wordFormation),
         semanticRelation: raw.semanticRelation ?? [],
-        multiPronunciation: grade >= 3 ? (raw.multiPronunciation ?? []) : [],
-        synonyms: grade >= 3 ? (raw.synonyms ?? []) : [],
-        antonyms: grade >= 3 ? (raw.antonyms ?? []) : [],
-        idioms: grade >= 5 ? (raw.idioms ?? []) : [],
+        multiPronunciation: raw.multiPronunciation ?? [],
+        synonyms: raw.synonyms ?? [],
+        antonyms: raw.antonyms ?? [],
+        idioms: raw.idioms ?? [],
         rhetoric: [],
       },
     }
