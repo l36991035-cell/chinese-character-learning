@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { getAllCourses, updateCourseStatus } from '@/lib/db/courses'
+import { getAllCourses, updateCourseStatus, deleteCourse } from '@/lib/db/courses'
 import { getCharactersByCourse } from '@/lib/db/characters'
 import { getGeneratedContentByCourse, generateAndSaveCharacter } from '@/lib/db/generated-content'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -17,6 +17,7 @@ export default function CoursesPage() {
   const [loading, setLoading] = useState(true)
   const [failedCounts, setFailedCounts] = useState<Record<number, number>>({})
   const [regenerating, setRegenerating] = useState<Record<number, { done: number; total: number } | null>>({})
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
 
   const loadCourses = useCallback(async () => {
     const all = await getAllCourses()
@@ -35,6 +36,12 @@ export default function CoursesPage() {
   useEffect(() => {
     loadCourses().finally(() => setLoading(false))
   }, [loadCourses])
+
+  async function handleDelete(courseId: number) {
+    await deleteCourse(courseId)
+    setConfirmDeleteId(null)
+    await loadCourses()
+  }
 
   async function handleRegenerate(course: CourseWithId) {
     const courseId = course.id
@@ -66,8 +73,37 @@ export default function CoursesPage() {
     return <p className="text-lg text-gray-500">載入中…</p>
   }
 
+  const confirmCourse = courses.find(c => c.id === confirmDeleteId)
+
   return (
     <div>
+      {/* 刪除確認對話框 */}
+      {confirmCourse && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
+          <div className="bg-white rounded-2xl p-8 flex flex-col gap-6 w-full max-w-sm shadow-xl">
+            <h2 className="text-2xl font-bold text-gray-800 text-center">確定要刪除？</h2>
+            <p className="text-lg text-gray-600 text-center leading-relaxed">
+              {confirmCourse.publisher}・{confirmCourse.grade} 年級・{SEMESTER_LABEL[confirmCourse.semester]}・第 {confirmCourse.lessonNumber} 課
+              <br />
+              <span className="font-semibold">{confirmCourse.lessonTitle}</span>
+            </p>
+            <p className="text-base text-red-600 text-center">刪除後無法復原，包含所有生字資料。</p>
+            <button
+              onClick={() => handleDelete(confirmCourse.id)}
+              className="min-h-[64px] text-xl font-semibold rounded-xl bg-red-500 text-white hover:bg-red-600 transition-colors"
+            >
+              確定刪除
+            </button>
+            <button
+              onClick={() => setConfirmDeleteId(null)}
+              className="min-h-[64px] text-xl font-semibold rounded-xl border-2 border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
+            >
+              取消
+            </button>
+          </div>
+        </div>
+      )}
+
       <Link href="/dashboard" className="inline-block mb-6 text-lg text-blue-600 hover:underline">
         ← 回到首頁
       </Link>
@@ -102,7 +138,7 @@ export default function CoursesPage() {
                 className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col gap-4"
               >
                 <div className="flex items-center justify-between gap-4">
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <p className="text-xl font-bold text-gray-800">
                       {course.publisher}・{course.grade} 年級・{SEMESTER_LABEL[course.semester]}・第 {course.lessonNumber} 課
                     </p>
@@ -111,7 +147,16 @@ export default function CoursesPage() {
                       <p className="text-base text-gray-400 mt-1">共 {course.characterCount} 個生字</p>
                     )}
                   </div>
-                  <StatusBadge status={course.status} />
+                  <div className="flex items-center gap-3 shrink-0">
+                    <StatusBadge status={course.status} />
+                    <button
+                      onClick={() => setConfirmDeleteId(course.id)}
+                      disabled={!!regen}
+                      className="min-h-[44px] px-4 text-base font-semibold rounded-lg border-2 border-red-200 text-red-500 hover:bg-red-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      刪除
+                    </button>
+                  </div>
                 </div>
 
                 {failed > 0 && !regen && (
