@@ -9,8 +9,8 @@ import { getWrongBook, addToWrongBook, removeFromWrongBook } from '@/lib/db/wron
 import { recordPractice } from '@/lib/db/practice-history'
 import { buildPracticeSession } from '@/lib/utils/session-builder'
 import { usePracticeSession } from '@/hooks/usePracticeSession'
-import { AudioPlayer } from '@/components/ui/AudioPlayer'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { HandwritingCanvas } from '@/components/ui/HandwritingCanvas'
 import type { Student, GeneratedContent, WrongBookEntry } from '@/types'
 import type { Character } from '@/types'
 
@@ -100,7 +100,6 @@ export default function PracticePage() {
   async function handleCorrect() {
     if (!currentItem || !student) return
     setSubmitError(null)
-    const practiceMode = currentIndex % 2 === 0 ? 'vocabulary' : 'sentence'
     try {
       await recordPractice({
         studentId,
@@ -108,7 +107,7 @@ export default function PracticePage() {
         character: currentItem.character,
         courseId: currentItem.courseId,
         sessionId,
-        practiceMode,
+        practiceMode: 'vocabulary',
         isCorrect: true,
       })
       const inWrongBook = wrongBookItems.some((w) => w.characterId === currentItem.characterId)
@@ -125,7 +124,6 @@ export default function PracticePage() {
   async function handleWrong() {
     if (!currentItem || !student) return
     setSubmitError(null)
-    const practiceMode = currentIndex % 2 === 0 ? 'vocabulary' : 'sentence'
     try {
       await recordPractice({
         studentId,
@@ -133,7 +131,7 @@ export default function PracticePage() {
         character: currentItem.character,
         courseId: currentItem.courseId,
         sessionId,
-        practiceMode,
+        practiceMode: 'vocabulary',
         isCorrect: false,
       })
       await addToWrongBook({
@@ -248,16 +246,10 @@ export default function PracticePage() {
     )
   }
 
-  // Determine mode for current item: even index = vocabulary, odd index = sentence
-  const isVocabMode = currentIndex % 2 === 0
-  const displayText = isVocabMode ? currentItem.content.vocabulary : currentItem.content.sentence
-  const displayBopomofo = isVocabMode
-    ? currentItem.content.vocabularyBopomofo
-    : currentItem.content.sentenceBopomofo
-  const modeLabel = isVocabMode ? '詞語模式' : '短句模式'
-
-  // Hint: show first character of the target character
-  const hintChar = currentItem.character[0] ?? '_'
+  const targetChar = currentItem.character
+  const vocabulary = currentItem.content.vocabulary
+  const bopomofoParts = currentItem.content.vocabularyBopomofo.split(' ')
+  const targetIndex = vocabulary.indexOf(targetChar)
 
   return (
     <div className="flex flex-col gap-6">
@@ -309,26 +301,32 @@ export default function PracticePage() {
         />
       </div>
 
-      {/* Audio player */}
-      <AudioPlayer text={currentItem.content.readingText} />
-
       {/* Practice card */}
       {phase === 'practicing' && (
         <div className="bg-white rounded-2xl border-2 border-gray-200 p-8 flex flex-col gap-6">
-          <p className="text-lg text-gray-500 font-medium">{modeLabel}</p>
+          <p className="text-lg text-gray-500 font-medium">詞語模式</p>
 
           <div className="text-center">
-            <p className="text-4xl font-bold text-gray-800 mb-2">{displayText}</p>
-            <p className="text-2xl text-blue-600">{displayBopomofo}</p>
+            <p className="text-lg text-gray-500 mb-4">請根據注音寫出詞語：</p>
+            <div className="flex items-end justify-center gap-2">
+              {Array.from(vocabulary).map((char, i) =>
+                i === targetIndex ? (
+                  <span key={i} className="text-5xl font-bold text-blue-600 leading-none">
+                    {bopomofoParts[i] ?? ''}
+                  </span>
+                ) : (
+                  <ruby key={i} className="text-5xl font-bold text-gray-800 leading-none" style={{ rubyAlign: 'center' }}>
+                    {char}
+                    <rt style={{ fontSize: '0.4em', color: '#3b82f6', letterSpacing: '0.05em' }}>
+                      {bopomofoParts[i] ?? ''}
+                    </rt>
+                  </ruby>
+                )
+              )}
+            </div>
           </div>
 
-          <div className="border-t pt-6">
-            <p className="text-lg text-gray-600 mb-3">請寫出：</p>
-            <p className="text-3xl font-bold text-gray-400 tracking-widest">
-              {hintChar}
-              {'＿'.repeat(Math.max(0, currentItem.character.length - 1))}
-            </p>
-          </div>
+          <HandwritingCanvas key={currentIndex} />
 
           <button
             onClick={revealAnswer}
@@ -345,13 +343,11 @@ export default function PracticePage() {
           <p className="text-lg text-gray-600 font-medium">正確答案：</p>
 
           <div className="text-center">
-            <p className="text-6xl font-bold text-gray-800 mb-3">
-              {currentItem.character}
+            <p className="text-5xl font-bold text-gray-800 mb-3">
+              {currentItem.content.vocabulary}
             </p>
             <p className="text-2xl text-blue-600">
-              {isVocabMode
-                ? currentItem.content.vocabularyBopomofo
-                : currentItem.content.sentenceBopomofo}
+              {currentItem.content.vocabularyBopomofo}
             </p>
           </div>
 
