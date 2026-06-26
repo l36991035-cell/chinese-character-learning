@@ -250,7 +250,7 @@ export default function PracticePage() {
 
   const targetChar = currentItem.character
   const vocabulary = currentItem.content.vocabulary
-  const bopomofoParts = currentItem.content.vocabularyBopomofo.split(' ')
+  const bopomofoParts = (currentItem.content.vocabularyBopomofo ?? '').split(' ')
   const targetIndex = vocabulary.indexOf(targetChar)
 
   return (
