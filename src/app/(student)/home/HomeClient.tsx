@@ -64,15 +64,15 @@ export default function StudentHomePage() {
     <div className="flex flex-col gap-6">
       {/* Back to dashboard */}
       <div>
-        <Link href="/dashboard" className="inline-flex items-center min-h-[48px] text-lg text-blue-600 hover:underline">
+        <Link href="/dashboard" className="inline-flex items-center min-h-[48px] text-lg text-[#8b7355] hover:underline">
           ← 回首頁
         </Link>
       </div>
 
       {/* Header */}
       <div className="text-center py-6">
-        <h1 className="text-4xl font-bold text-gray-800">{student.name}</h1>
-        <p className="text-xl text-gray-500 mt-2">{student.grade} 年級</p>
+        <h1 className="text-4xl font-bold text-ink font-serif">{student.name}</h1>
+        <p className="text-xl text-[#8b7355] mt-2">{student.grade} 年級</p>
       </div>
 
       {/* Wrong book alert */}
@@ -82,20 +82,21 @@ export default function StudentHomePage() {
       {hasCourses ? (
         <button
           onClick={() => router.push(`/practice?id=${studentId}&mode=course`)}
-          className="min-h-[64px] flex items-center justify-center text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+          className="min-h-[64px] flex items-center justify-center text-xl font-semibold rounded-xl text-[#fdf6e3] tracking-widest transition-all hover:brightness-90"
+          style={{ background: 'linear-gradient(135deg, #c0392b, #8b1a1a)', boxShadow: '0 4px 12px rgba(192,57,43,0.3)' }}
         >
           開始課文練習
         </button>
       ) : (
-        <div className="bg-gray-100 rounded-2xl p-6 text-center">
-          <p className="text-lg text-gray-500">尚未連結任何課程，請先請家長設定課程。</p>
+        <div className="bg-card rounded-xl border border-gold p-6 text-center">
+          <p className="text-lg text-[#8b7355]">尚未連結任何課程，請先請家長設定課程。</p>
         </div>
       )}
 
       {/* Extension learning */}
       <Link
         href={`/extension?id=${studentId}`}
-        className="min-h-[64px] flex items-center justify-center text-xl font-medium rounded-xl border-2 border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
+        className="min-h-[64px] flex items-center justify-center text-xl font-medium rounded-xl border border-gold text-[#8b7355] hover:bg-card transition-colors"
       >
         查看延伸學習
       </Link>

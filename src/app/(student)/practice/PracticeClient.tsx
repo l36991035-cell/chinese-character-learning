@@ -173,39 +173,41 @@ export default function PracticePage() {
       const isNotLinked = !hasLinkedCourses
       return (
         <div className="flex flex-col gap-6 text-center py-12">
-          <h1 className="text-3xl font-bold text-gray-700">目前沒有可練習的生字</h1>
+          <h1 className="text-3xl font-bold text-ink font-serif">目前沒有可練習的生字</h1>
           {isAiError ? (
             <>
-              <p className="text-xl text-gray-500 leading-relaxed">
+              <p className="text-xl text-[#8b7355] leading-relaxed">
                 課程已連結，但生字的 AI 內容尚未完成生成。<br />請到「課程管理」點選「重新生成」。
               </p>
               <button
                 onClick={() => router.push('/courses')}
-                className="min-h-[64px] text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                className="min-h-[64px] text-xl font-semibold rounded-xl text-[#fdf6e3] transition-all hover:brightness-90"
+                style={{ background: 'linear-gradient(135deg, #c0392b, #8b1a1a)' }}
               >
                 去課程管理重新生成
               </button>
             </>
           ) : isNotLinked ? (
             <>
-              <p className="text-xl text-gray-500 leading-relaxed">
+              <p className="text-xl text-[#8b7355] leading-relaxed">
                 請到「管理設定」→「已選課程」→「+ 新增課程」，把課程連結到這位學生。
               </p>
               <button
                 onClick={() => router.push(`/students/settings?id=${studentId}`)}
-                className="min-h-[64px] text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                className="min-h-[64px] text-xl font-semibold rounded-xl text-[#fdf6e3] transition-all hover:brightness-90"
+                style={{ background: 'linear-gradient(135deg, #c0392b, #8b1a1a)' }}
               >
                 去管理設定連結課程
               </button>
             </>
           ) : (
-            <p className="text-xl text-gray-500 leading-relaxed">
+            <p className="text-xl text-[#8b7355] leading-relaxed">
               請先匯入課程並連結到這位學生。
             </p>
           )}
           <button
             onClick={() => router.push(`/home?id=${studentId}`)}
-            className="min-h-[64px] text-xl font-semibold rounded-xl border-2 border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
+            className="min-h-[64px] text-xl font-semibold rounded-xl border border-gold text-[#8b7355] hover:bg-card transition-colors"
           >
             回首頁
           </button>
@@ -215,18 +217,19 @@ export default function PracticePage() {
 
     return (
       <div className="flex flex-col gap-6 text-center py-12">
-        <h1 className="text-4xl font-bold text-gray-800">本次練習完成！</h1>
-        <p className="text-3xl font-semibold text-blue-600">
+        <h1 className="text-4xl font-bold text-ink font-serif">本次練習完成！</h1>
+        <p className="text-3xl font-semibold text-zhu">
           答對 {correct} / {total} 題
         </p>
         {correct < total && (
-          <p className="text-xl text-amber-700">
+          <p className="text-xl text-[#8b7355]">
             錯誤字已加入錯字本，下次繼續加油！
           </p>
         )}
         <button
           onClick={() => router.push(`/home?id=${studentId}`)}
-          className="min-h-[64px] text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+          className="min-h-[64px] text-xl font-semibold rounded-xl text-[#fdf6e3] transition-all hover:brightness-90"
+          style={{ background: 'linear-gradient(135deg, #c0392b, #8b1a1a)' }}
         >
           回首頁
         </button>
@@ -237,10 +240,10 @@ export default function PracticePage() {
   if (!currentItem) {
     return (
       <div className="flex flex-col gap-6 text-center py-12">
-        <p className="text-2xl text-gray-500">沒有可練習的字</p>
+        <p className="text-2xl text-[#8b7355]">沒有可練習的字</p>
         <button
           onClick={() => router.push(`/home?id=${studentId}`)}
-          className="min-h-[64px] text-xl font-semibold rounded-xl border-2 border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
+          className="min-h-[64px] text-xl font-semibold rounded-xl border border-gold text-[#8b7355] hover:bg-card transition-colors"
         >
           回首頁
         </button>
@@ -265,18 +268,18 @@ export default function PracticePage() {
 
       {showExitConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
-          <div className="bg-white rounded-2xl p-8 flex flex-col gap-6 w-full max-w-sm shadow-xl">
-            <h2 className="text-2xl font-bold text-gray-800 text-center">確定要離開嗎？</h2>
-            <p className="text-lg text-gray-500 text-center">本次練習紀錄不會儲存。</p>
+          <div className="bg-card rounded-xl border border-gold p-8 flex flex-col gap-6 w-full max-w-sm" style={{ boxShadow: '0 8px 32px rgba(44,24,16,0.15)' }}>
+            <h2 className="text-2xl font-bold text-ink text-center font-serif">確定要離開嗎？</h2>
+            <p className="text-lg text-[#8b7355] text-center">本次練習紀錄不會儲存。</p>
             <button
               onClick={() => router.push(`/home?id=${studentId}`)}
-              className="min-h-[64px] text-xl font-semibold rounded-xl bg-red-500 text-white hover:bg-red-600 transition-colors"
+              className="min-h-[64px] text-xl font-semibold rounded-xl bg-zhu text-[#fdf6e3] hover:brightness-90 transition-all"
             >
               離開練習
             </button>
             <button
               onClick={() => setShowExitConfirm(false)}
-              className="min-h-[64px] text-xl font-semibold rounded-xl border-2 border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
+              className="min-h-[64px] text-xl font-semibold rounded-xl border border-gold text-[#8b7355] hover:bg-paper transition-colors"
             >
               繼續練習
             </button>
@@ -288,45 +291,45 @@ export default function PracticePage() {
       <div className="flex items-center justify-between">
         <button
           onClick={() => setShowExitConfirm(true)}
-          className="text-lg text-blue-600 hover:underline"
+          className="text-lg text-[#8b7355] hover:underline"
         >
           ← 離開
         </button>
-        <span className="text-base text-gray-400">
-          {currentItem.isFromWrongBook ? '📕 錯字本' : '📗 課文'}
+        <span className="text-base text-[#a89060]">
+          {currentItem.isFromWrongBook ? '錯字本' : '課文'}
         </span>
       </div>
       <div className="flex items-center justify-between">
-        <p className="text-xl text-gray-600">
+        <p className="text-xl text-[#8b7355]">
           第 {currentIndex + 1} / {totalItems} 題
         </p>
       </div>
 
       {/* Progress bar */}
-      <div className="w-full bg-gray-200 rounded-full h-2">
+      <div className="w-full bg-gold rounded-full h-2">
         <div
-          className="bg-blue-500 h-2 rounded-full transition-all"
+          className="bg-ink h-2 rounded-full transition-all"
           style={{ width: `${((currentIndex) / totalItems) * 100}%` }}
         />
       </div>
 
       {/* Practice card */}
       {phase === 'practicing' && (
-        <div className="bg-white rounded-2xl border-2 border-gray-200 p-8 flex flex-col gap-6">
-          <p className="text-lg text-gray-500 font-medium">詞語模式</p>
+        <div className="bg-card rounded-xl border border-gold p-8 flex flex-col gap-6" style={{ boxShadow: '0 2px 12px rgba(44,24,16,0.08), inset 0 1px 0 rgba(255,255,255,0.8)' }}>
+          <p className="text-lg text-[#a89060] font-medium tracking-widest">詞語模式</p>
 
           <div className="text-center">
-            <p className="text-lg text-gray-500 mb-4">請根據注音寫出詞語：</p>
+            <p className="text-lg text-[#8b7355] mb-4">請根據注音寫出詞語：</p>
             <div className="flex items-end justify-center gap-2">
               {Array.from(vocabulary).map((char, i) =>
                 i === targetIndex ? (
-                  <span key={i} className="text-5xl font-bold text-blue-600 leading-none">
+                  <span key={i} className="text-5xl font-bold text-zhu leading-none font-serif">
                     {bopomofoParts[i] ?? ''}
                   </span>
                 ) : (
-                  <ruby key={i} className="text-5xl font-bold text-gray-800 leading-none" style={{ rubyAlign: 'center' }}>
+                  <ruby key={i} className="text-5xl font-bold text-ink leading-none font-serif" style={{ rubyAlign: 'center' }}>
                     {char}
-                    <rt style={{ fontSize: '0.4em', color: '#3b82f6', letterSpacing: '0.05em' }}>
+                    <rt style={{ fontSize: '0.4em', color: '#8b7355', letterSpacing: '0.05em' }}>
                       {bopomofoParts[i] ?? ''}
                     </rt>
                   </ruby>
@@ -340,13 +343,14 @@ export default function PracticePage() {
           <div className="flex gap-3">
             <button
               onClick={() => setShowStrokeOrder(true)}
-              className="min-h-[64px] flex-1 text-xl font-semibold rounded-xl border-2 border-blue-300 text-blue-600 hover:bg-blue-50 transition-colors"
+              className="min-h-[64px] flex-1 text-xl font-semibold rounded-xl border border-gold text-[#8b7355] hover:bg-paper transition-colors"
             >
-              ✏️ 看筆順
+              看筆順
             </button>
             <button
               onClick={revealAnswer}
-              className="min-h-[64px] flex-[2] text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+              className="min-h-[64px] flex-[2] text-xl font-semibold rounded-xl text-[#fdf6e3] tracking-widest transition-all hover:brightness-90"
+              style={{ background: 'linear-gradient(135deg, #c0392b, #8b1a1a)', boxShadow: '0 4px 12px rgba(192,57,43,0.35)' }}
             >
               公布答案
             </button>
@@ -356,32 +360,34 @@ export default function PracticePage() {
 
       {/* Reveal card */}
       {phase === 'revealing' && (
-        <div className="bg-white rounded-2xl border-2 border-gray-200 p-8 flex flex-col gap-6">
-          <p className="text-lg text-gray-600 font-medium">正確答案：</p>
+        <div className="bg-card rounded-xl border border-gold p-8 flex flex-col gap-6" style={{ boxShadow: '0 2px 12px rgba(44,24,16,0.08), inset 0 1px 0 rgba(255,255,255,0.8)' }}>
+          <p className="text-lg text-[#a89060] font-medium tracking-widest">正確答案</p>
 
           <div className="text-center">
-            <p className="text-5xl font-bold text-gray-800 mb-3">
+            <p className="text-5xl font-bold text-ink mb-3 font-serif">
               {currentItem.content.vocabulary}
             </p>
-            <p className="text-2xl text-blue-600">
+            <p className="text-2xl text-[#8b7355]">
               {currentItem.content.vocabularyBopomofo}
             </p>
           </div>
 
           {submitError && (
-            <p className="text-lg text-red-600 text-center font-medium">{submitError}</p>
+            <p className="text-lg text-zhu text-center font-medium">{submitError}</p>
           )}
 
           <div className="grid grid-cols-2 gap-4">
             <button
               onClick={handleCorrect}
-              className="min-h-[80px] text-2xl font-bold rounded-xl bg-green-500 text-white hover:bg-green-600 transition-colors"
+              className="min-h-[80px] text-2xl font-bold rounded-xl text-[#f0fdf4] transition-all hover:brightness-90"
+              style={{ background: 'linear-gradient(135deg, #27643a, #1e4f2e)' }}
             >
               ○ 答對
             </button>
             <button
               onClick={handleWrong}
-              className="min-h-[80px] text-2xl font-bold rounded-xl bg-red-500 text-white hover:bg-red-600 transition-colors"
+              className="min-h-[80px] text-2xl font-bold rounded-xl text-[#fdf6e3] transition-all hover:brightness-90"
+              style={{ background: 'linear-gradient(135deg, #c0392b, #8b1a1a)' }}
             >
               × 答錯
             </button>
