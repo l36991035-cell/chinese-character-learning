@@ -45,17 +45,17 @@ export default function NewStudentPage() {
       <div className="mb-6">
         <Link
           href="/dashboard"
-          className="inline-flex items-center min-h-[48px] min-w-[48px] text-lg text-blue-600 hover:underline"
+          className="inline-flex items-center min-h-[48px] min-w-[48px] text-lg text-[#8b7355] hover:underline"
         >
           ← 回到首頁
         </Link>
       </div>
 
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">新增學生</h1>
+      <h1 className="text-3xl font-bold text-ink font-serif mb-8">新增學生</h1>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 flex flex-col gap-6">
+      <form onSubmit={handleSubmit} className="bg-card rounded-2xl shadow-sm border border-gold p-8 flex flex-col gap-6">
         <div>
-          <label htmlFor="name" className="block text-lg font-medium text-gray-700 mb-2">
+          <label htmlFor="name" className="block text-lg font-medium text-ink mb-2">
             姓名
           </label>
           <input
@@ -65,19 +65,19 @@ export default function NewStudentPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="請輸入學生姓名"
-            className="w-full min-h-[56px] rounded-xl border-2 border-gray-300 px-4 text-lg focus:border-blue-500 focus:outline-none"
+            className="w-full min-h-[56px] rounded-xl border-2 border-gold px-4 text-lg text-ink focus:border-[#c0392b] focus:outline-none bg-card"
           />
         </div>
 
         <div>
-          <label htmlFor="grade" className="block text-lg font-medium text-gray-700 mb-2">
+          <label htmlFor="grade" className="block text-lg font-medium text-ink mb-2">
             年級
           </label>
           <select
             id="grade"
             value={grade}
             onChange={(e) => setGrade(Number(e.target.value) as Student['grade'])}
-            className="w-full min-h-[56px] rounded-xl border-2 border-gray-300 px-4 text-lg focus:border-blue-500 focus:outline-none bg-white"
+            className="w-full min-h-[56px] rounded-xl border-2 border-gold px-4 text-lg text-ink focus:border-[#c0392b] focus:outline-none bg-card"
           >
             {GRADE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -92,7 +92,8 @@ export default function NewStudentPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="min-h-[64px] text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 transition-colors"
+          className="min-h-[64px] text-xl font-semibold rounded-xl text-[#fdf6e3] transition-all hover:brightness-90 disabled:opacity-60"
+          style={{ background: 'linear-gradient(135deg, #c0392b, #8b1a1a)' }}
         >
           {submitting ? '新增中…' : '建立學生'}
         </button>

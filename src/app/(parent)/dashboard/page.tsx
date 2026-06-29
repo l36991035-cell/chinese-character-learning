@@ -23,10 +23,10 @@ export default function DashboardPage() {
     return (
       <div>
         <div className="flex items-center justify-between mb-8">
-          <div className="h-9 w-32 animate-pulse bg-gray-200 rounded-xl" />
+          <div className="h-9 w-32 animate-pulse bg-gold/30 rounded-xl" />
           <div className="flex gap-3">
-            <div className="h-16 w-36 animate-pulse bg-gray-200 rounded-xl" />
-            <div className="h-16 w-32 animate-pulse bg-gray-200 rounded-xl" />
+            <div className="h-16 w-36 animate-pulse bg-gold/30 rounded-xl" />
+            <div className="h-16 w-32 animate-pulse bg-gold/30 rounded-xl" />
           </div>
         </div>
         <div className="grid gap-6 sm:grid-cols-2">
@@ -40,17 +40,18 @@ export default function DashboardPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">我的學生</h1>
+        <h1 className="text-3xl font-bold text-ink font-serif">我的學生</h1>
         <div className="flex gap-3">
           <Link
             href="/courses"
-            className="min-h-[64px] px-6 text-lg font-medium rounded-xl border-2 border-blue-600 text-blue-600 hover:bg-blue-50 transition-colors flex items-center"
+            className="min-h-[64px] px-6 text-lg font-medium rounded-xl border-2 border-gold text-[#8b7355] hover:bg-card transition-colors flex items-center"
           >
             課程管理
           </Link>
           <Link
             href="/students/new"
-            className="min-h-[64px] px-6 text-lg font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-2"
+            className="min-h-[64px] px-6 text-lg font-semibold rounded-xl text-[#fdf6e3] transition-all hover:brightness-90 flex items-center gap-2"
+            style={{ background: 'linear-gradient(135deg, #c0392b, #8b1a1a)' }}
           >
             <span className="text-2xl leading-none">+</span> 新增學生
           </Link>
@@ -58,11 +59,12 @@ export default function DashboardPage() {
       </div>
 
       {students.length === 0 ? (
-        <div className="rounded-2xl border-2 border-dashed border-gray-300 p-16 text-center">
-          <p className="text-xl text-gray-500 mb-6">尚未新增學生</p>
+        <div className="rounded-2xl border-2 border-dashed border-gold p-16 text-center">
+          <p className="text-xl text-[#8b7355] mb-6">尚未新增學生</p>
           <Link
             href="/students/new"
-            className="inline-flex min-h-[64px] items-center px-8 text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors gap-2"
+            className="inline-flex min-h-[64px] items-center px-8 text-xl font-semibold rounded-xl text-[#fdf6e3] transition-all hover:brightness-90 gap-2"
+            style={{ background: 'linear-gradient(135deg, #c0392b, #8b1a1a)' }}
           >
             <span className="text-2xl leading-none">+</span> 新增第一位學生
           </Link>
@@ -94,33 +96,34 @@ function StudentCard({ student }: { student: StudentWithId }) {
   }, [student.id])
 
   return (
-    <div className="rounded-2xl bg-white shadow-sm border border-gray-200 p-6">
+    <div className="rounded-2xl bg-card shadow-sm border border-gold p-6">
       <div className="mb-4">
-        <h2 className="text-2xl font-bold text-gray-800">{student.name}</h2>
-        <p className="text-lg text-gray-500">{student.grade} 年級</p>
+        <h2 className="text-2xl font-bold text-ink">{student.name}</h2>
+        <p className="text-lg text-[#8b7355]">{student.grade} 年級</p>
       </div>
 
       <div className="flex gap-6 mb-6">
         <div className="text-center">
-          <p className="text-3xl font-bold text-blue-600">{learnedCount}</p>
-          <p className="text-base text-gray-500">已學字數</p>
+          <p className="text-3xl font-bold text-zhu">{learnedCount}</p>
+          <p className="text-base text-[#8b7355]">已學字數</p>
         </div>
         <div className="text-center">
           <p className="text-3xl font-bold text-orange-500">{wrongCount}</p>
-          <p className="text-base text-gray-500">錯字本數量</p>
+          <p className="text-base text-[#8b7355]">錯字本數量</p>
         </div>
       </div>
 
       <div className="flex gap-3">
         <Link
           href={`/home?id=${student.id}`}
-          className="flex-1 min-h-[64px] text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center justify-center"
+          className="flex-1 min-h-[64px] text-xl font-semibold rounded-xl text-[#fdf6e3] transition-all hover:brightness-90 flex items-center justify-center"
+          style={{ background: 'linear-gradient(135deg, #c0392b, #8b1a1a)' }}
         >
           開始練習
         </Link>
         <Link
           href={`/students/settings?id=${student.id}`}
-          className="min-h-[64px] px-5 text-lg font-medium rounded-xl border-2 border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center"
+          className="min-h-[64px] px-5 text-lg font-medium rounded-xl border-2 border-gold text-[#8b7355] hover:bg-card transition-colors flex items-center justify-center"
         >
           管理設定
         </Link>

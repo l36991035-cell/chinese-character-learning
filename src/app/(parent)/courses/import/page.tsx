@@ -163,19 +163,19 @@ export default function ImportPage() {
   return (
     <div className="max-w-lg mx-auto">
       <div className="mb-6">
-        <Link href="/dashboard" className="inline-flex items-center min-h-[48px] min-w-[48px] text-lg text-blue-600 hover:underline">
+        <Link href="/dashboard" className="inline-flex items-center min-h-[48px] min-w-[48px] text-lg text-[#8b7355] hover:underline">
           ← 回到首頁
         </Link>
       </div>
 
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">匯入新課程</h1>
+      <h1 className="text-3xl font-bold text-ink font-serif mb-8">匯入新課程</h1>
 
       {/* Step 1: Course info form */}
       {step === 'form' && (
-        <form onSubmit={handleFormSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 flex flex-col gap-6">
+        <form onSubmit={handleFormSubmit} className="bg-card rounded-2xl shadow-sm border border-gold p-8 flex flex-col gap-6">
           {/* Publisher */}
           <div>
-            <label className="block text-xl font-semibold text-gray-700 mb-3">出版社</label>
+            <label className="block text-xl font-semibold text-ink mb-3">出版社</label>
             <div className="flex gap-3">
               {PUBLISHERS.map((pub) => (
                 <button
@@ -184,8 +184,8 @@ export default function ImportPage() {
                   onClick={() => setForm((f) => ({ ...f, publisher: pub }))}
                   className={`min-h-[64px] flex-1 text-xl rounded-xl border-2 font-medium transition-colors ${
                     form.publisher === pub
-                      ? 'border-blue-600 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 text-gray-600 hover:border-blue-300'
+                      ? 'border-[#c0392b] bg-[#fdf6e3] text-[#c0392b]'
+                      : 'border-gold text-[#8b7355] hover:border-[#c0392b]'
                   }`}
                 >
                   {pub}
@@ -196,7 +196,7 @@ export default function ImportPage() {
 
           {/* Grade */}
           <div>
-            <label className="block text-xl font-semibold text-gray-700 mb-3">年級</label>
+            <label className="block text-xl font-semibold text-ink mb-3">年級</label>
             <div className="grid grid-cols-3 gap-3">
               {GRADES.map((g) => (
                 <button
@@ -205,8 +205,8 @@ export default function ImportPage() {
                   onClick={() => setForm((f) => ({ ...f, grade: g }))}
                   className={`min-h-[64px] text-xl rounded-xl border-2 font-medium transition-colors ${
                     form.grade === g
-                      ? 'border-blue-600 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 text-gray-600 hover:border-blue-300'
+                      ? 'border-[#c0392b] bg-[#fdf6e3] text-[#c0392b]'
+                      : 'border-gold text-[#8b7355] hover:border-[#c0392b]'
                   }`}
                 >
                   {g} 年級
@@ -217,7 +217,7 @@ export default function ImportPage() {
 
           {/* Semester */}
           <div>
-            <label className="block text-xl font-semibold text-gray-700 mb-3">學期</label>
+            <label className="block text-xl font-semibold text-ink mb-3">學期</label>
             <div className="flex gap-3">
               {([1, 2] as const).map((s) => (
                 <button
@@ -226,8 +226,8 @@ export default function ImportPage() {
                   onClick={() => setForm((f) => ({ ...f, semester: s }))}
                   className={`min-h-[64px] flex-1 text-xl rounded-xl border-2 font-medium transition-colors ${
                     form.semester === s
-                      ? 'border-blue-600 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 text-gray-600 hover:border-blue-300'
+                      ? 'border-[#c0392b] bg-[#fdf6e3] text-[#c0392b]'
+                      : 'border-gold text-[#8b7355] hover:border-[#c0392b]'
                   }`}
                 >
                   {s === 1 ? '上學期' : '下學期'}
@@ -238,34 +238,35 @@ export default function ImportPage() {
 
           {/* Lesson Number */}
           <div>
-            <label className="block text-xl font-semibold text-gray-700 mb-3">課次</label>
+            <label className="block text-xl font-semibold text-ink mb-3">課次</label>
             <input
               type="number"
               min={1}
               max={20}
               value={form.lessonNumber}
               onChange={(e) => setForm((f) => ({ ...f, lessonNumber: parseInt(e.target.value) || 1 }))}
-              className="w-full min-h-[64px] px-4 text-xl rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none"
+              className="w-full min-h-[64px] px-4 text-xl rounded-xl border-2 border-gold focus:border-[#c0392b] focus:outline-none bg-card text-ink"
             />
           </div>
 
           {/* Lesson Title */}
           <div>
-            <label className="block text-xl font-semibold text-gray-700 mb-3">
-              課文名稱 <span className="text-base font-normal text-gray-400">（選填）</span>
+            <label className="block text-xl font-semibold text-ink mb-3">
+              課文名稱 <span className="text-base font-normal text-[#8b7355]">（選填）</span>
             </label>
             <input
               type="text"
               placeholder={`第${form.lessonNumber}課`}
               value={form.lessonTitle}
               onChange={(e) => setForm((f) => ({ ...f, lessonTitle: e.target.value }))}
-              className="w-full min-h-[64px] px-4 text-xl rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none"
+              className="w-full min-h-[64px] px-4 text-xl rounded-xl border-2 border-gold focus:border-[#c0392b] focus:outline-none bg-card text-ink"
             />
           </div>
 
           <button
             type="submit"
-            className="min-h-[64px] text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+            className="min-h-[64px] text-xl font-semibold rounded-xl text-[#fdf6e3] transition-all hover:brightness-90"
+            style={{ background: 'linear-gradient(135deg, #c0392b, #8b1a1a)' }}
           >
             下一步：輸入生字
           </button>
@@ -274,23 +275,24 @@ export default function ImportPage() {
 
       {/* Step 2: Upload or Manual input */}
       {step === 'upload' && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 flex flex-col gap-6">
+        <div className="bg-card rounded-2xl shadow-sm border border-gold p-8 flex flex-col gap-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-1">輸入生字</h2>
-            <p className="text-lg text-gray-500">
+            <h2 className="text-2xl font-bold text-ink font-serif mb-1">輸入生字</h2>
+            <p className="text-lg text-[#8b7355]">
               {form.publisher}・{form.grade} 年級・{form.semester === 1 ? '上學期' : '下學期'}・第 {form.lessonNumber} 課
             </p>
           </div>
 
           {/* Mode toggle */}
-          <div className="flex rounded-xl border-2 border-gray-200 overflow-hidden">
+          <div className="flex rounded-xl border-2 border-gold overflow-hidden">
             <button
               onClick={() => { setUploadMode('manual'); setUploadError(null) }}
               className={`flex-1 min-h-[56px] text-lg font-medium transition-colors ${
                 uploadMode === 'manual'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:bg-gray-50'
+                  ? 'text-[#fdf6e3]'
+                  : 'text-[#8b7355] hover:bg-[#fdf6e3]'
               }`}
+              style={uploadMode === 'manual' ? { background: 'linear-gradient(135deg, #c0392b, #8b1a1a)' } : {}}
             >
               手動輸入
             </button>
@@ -298,9 +300,10 @@ export default function ImportPage() {
               onClick={() => { setUploadMode('file'); setUploadError(null) }}
               className={`flex-1 min-h-[56px] text-lg font-medium transition-colors ${
                 uploadMode === 'file'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:bg-gray-50'
+                  ? 'text-[#fdf6e3]'
+                  : 'text-[#8b7355] hover:bg-[#fdf6e3]'
               }`}
+              style={uploadMode === 'file' ? { background: 'linear-gradient(135deg, #c0392b, #8b1a1a)' } : {}}
             >
               上傳文件
             </button>
@@ -310,7 +313,7 @@ export default function ImportPage() {
           {uploadMode === 'manual' && (
             <>
               <div>
-                <label className="block text-lg font-medium text-gray-700 mb-2">
+                <label className="block text-lg font-medium text-ink mb-2">
                   貼上或輸入課文內容，系統自動抓取生字
                 </label>
                 <textarea
@@ -318,14 +321,14 @@ export default function ImportPage() {
                   onChange={(e) => setManualText(e.target.value)}
                   placeholder="例如：小時不識月，呼作白玉盤。又疑瑤台鏡，飛在青雲端。"
                   rows={6}
-                  className="w-full px-4 py-3 text-xl rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none resize-none"
+                  className="w-full px-4 py-3 text-xl rounded-xl border-2 border-gold focus:border-[#c0392b] focus:outline-none resize-none bg-[#fffdf5] text-ink"
                 />
               </div>
 
               {previewChars.length > 0 && (
-                <div className="bg-blue-50 rounded-xl p-4">
-                  <p className="text-base text-blue-700 font-medium mb-2">找到 {previewChars.length} 個不重複漢字：</p>
-                  <p className="text-2xl tracking-widest text-blue-900">{previewChars.join(' ')}</p>
+                <div className="bg-[#fdf6e3] rounded-xl p-4 border border-gold">
+                  <p className="text-base text-[#8b7355] font-medium mb-2">找到 {previewChars.length} 個不重複漢字：</p>
+                  <p className="text-2xl tracking-widest text-ink">{previewChars.join(' ')}</p>
                 </div>
               )}
 
@@ -334,7 +337,8 @@ export default function ImportPage() {
               <button
                 onClick={handleManualSubmit}
                 disabled={previewChars.length === 0 || uploading}
-                className="min-h-[64px] text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="min-h-[64px] text-xl font-semibold rounded-xl text-[#fdf6e3] transition-all hover:brightness-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ background: 'linear-gradient(135deg, #c0392b, #8b1a1a)' }}
               >
                 {uploading ? '送出中…' : `確認送出 ${previewChars.length > 0 ? previewChars.length + ' 個生字' : ''}`}
               </button>
@@ -350,7 +354,7 @@ export default function ImportPage() {
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
                 className={`rounded-2xl border-2 border-dashed p-12 text-center cursor-pointer transition-colors ${
-                  dragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+                  dragging ? 'border-[#c0392b] bg-[#fdf6e3]' : 'border-gold hover:border-[#c0392b] hover:bg-[#fdf6e3]'
                 }`}
               >
                 <input
@@ -363,13 +367,13 @@ export default function ImportPage() {
                 {selectedFile ? (
                   <div>
                     <p className="text-2xl mb-2">📄</p>
-                    <p className="text-xl font-medium text-gray-800">{selectedFile.name}</p>
-                    <p className="text-base text-gray-400 mt-1">{(selectedFile.size / 1024).toFixed(0)} KB</p>
+                    <p className="text-xl font-medium text-ink">{selectedFile.name}</p>
+                    <p className="text-base text-[#8b7355] mt-1">{(selectedFile.size / 1024).toFixed(0)} KB</p>
                   </div>
                 ) : (
                   <div>
                     <p className="text-2xl mb-2">📂</p>
-                    <p className="text-xl text-gray-500">拖曳 Word（.docx）或 Excel（.xlsx）至此，或點擊選擇檔案</p>
+                    <p className="text-xl text-[#8b7355]">拖曳 Word（.docx）或 Excel（.xlsx）至此，或點擊選擇檔案</p>
                   </div>
                 )}
               </div>
@@ -379,7 +383,8 @@ export default function ImportPage() {
               <button
                 onClick={handleUpload}
                 disabled={!selectedFile || uploading}
-                className="min-h-[64px] text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="min-h-[64px] text-xl font-semibold rounded-xl text-[#fdf6e3] transition-all hover:brightness-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ background: 'linear-gradient(135deg, #c0392b, #8b1a1a)' }}
               >
                 {uploading ? '解析中…' : '開始解析'}
               </button>
@@ -390,21 +395,21 @@ export default function ImportPage() {
 
       {/* Step 3: Processing */}
       {(step === 'processing' || step === 'done') && courseId && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 flex flex-col gap-6">
-          <h2 className="text-2xl font-bold text-gray-800">解析進度</h2>
+        <div className="bg-card rounded-2xl shadow-sm border border-gold p-8 flex flex-col gap-6">
+          <h2 className="text-2xl font-bold text-ink font-serif">解析進度</h2>
 
           <div className="flex items-center gap-4">
-            <span className="text-lg text-gray-600">目前狀態：</span>
+            <span className="text-lg text-[#8b7355]">目前狀態：</span>
             {courseStatus && <StatusBadge status={courseStatus} />}
           </div>
 
           {step === 'processing' && (
             <div>
-              <p className="text-lg text-gray-600">AI 生成中… {generatedCount} / {characterCount} 個生字</p>
+              <p className="text-lg text-[#8b7355]">AI 生成中… {generatedCount} / {characterCount} 個生字</p>
               <div className="flex gap-2 items-center mt-3">
-                <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div className="w-2 h-2 rounded-full bg-zhu animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 rounded-full bg-zhu animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 rounded-full bg-zhu animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
             </div>
           )}
@@ -412,18 +417,19 @@ export default function ImportPage() {
           {step === 'done' && courseStatus === 'ready' && (
             <div>
               <p className="text-xl text-green-700 font-semibold">完成！共 {characterCount} 個生字，AI 已生成延伸資料。</p>
-              <p className="text-lg text-gray-500 mt-3">下一步：到學生的「管理設定」→「已選課程」→「+ 新增課程」，把這堂課連結給學生。</p>
+              <p className="text-lg text-[#8b7355] mt-3">下一步：到學生的「管理設定」→「已選課程」→「+ 新增課程」，把這堂課連結給學生。</p>
               <div className="flex flex-col gap-3 mt-6">
                 <Link
                   href="/dashboard"
-                  className="min-h-[64px] text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center justify-center"
+                  className="min-h-[64px] text-xl font-semibold rounded-xl text-[#fdf6e3] transition-all hover:brightness-90 flex items-center justify-center"
+                  style={{ background: 'linear-gradient(135deg, #c0392b, #8b1a1a)' }}
                 >
                   回首頁（去連結學生）
                 </Link>
                 <Link
                   href="/courses/import"
                   onClick={() => { setStep('form'); setCourseId(null); setSelectedFile(null); setCourseStatus(null); setManualText('') }}
-                  className="min-h-[64px] text-xl font-semibold rounded-xl border-2 border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center"
+                  className="min-h-[64px] text-xl font-semibold rounded-xl border-2 border-gold text-[#8b7355] hover:bg-[#fdf6e3] transition-colors flex items-center justify-center"
                 >
                   再匯入一堂課
                 </Link>
@@ -435,7 +441,7 @@ export default function ImportPage() {
             <p className="text-xl text-red-600 font-semibold">解析失敗，請重新嘗試。</p>
           )}
 
-          <p className="text-base text-gray-400">課程 ID：{courseId}</p>
+          <p className="text-base text-[#8b7355]">課程 ID：{courseId}</p>
         </div>
       )}
     </div>

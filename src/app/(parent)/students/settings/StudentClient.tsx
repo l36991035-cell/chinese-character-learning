@@ -108,7 +108,7 @@ export default function StudentSettingsPage() {
   const availableToAdd = allReadyCourses.filter((c) => !linkedCourseIds.has(c.id))
 
   if (loading) {
-    return <p className="text-lg text-gray-500">載入中…</p>
+    return <p className="text-lg text-[#8b7355]">載入中…</p>
   }
 
   if (!student) {
@@ -118,57 +118,57 @@ export default function StudentSettingsPage() {
   return (
     <div className="max-w-lg mx-auto">
       <div className="mb-6">
-        <Link href="/dashboard" className="inline-flex items-center min-h-[48px] min-w-[48px] text-lg text-blue-600 hover:underline">
+        <Link href="/dashboard" className="inline-flex items-center min-h-[48px] min-w-[48px] text-lg text-[#8b7355] hover:underline">
           ← 回到首頁
         </Link>
       </div>
 
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">{student.name}</h1>
-        <p className="text-lg text-gray-500">{student.grade} 年級</p>
+        <h1 className="text-3xl font-bold text-ink font-serif">{student.name}</h1>
+        <p className="text-lg text-[#8b7355]">{student.grade} 年級</p>
       </div>
 
       {/* Stats */}
       {stats && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-6">學習統計</h2>
+        <div className="bg-card rounded-2xl shadow-sm border border-gold p-8 mb-6">
+          <h2 className="text-xl font-semibold text-ink mb-6">學習統計</h2>
           <div className="flex gap-8">
             <div className="text-center">
-              <p className="text-4xl font-bold text-blue-600">{stats.learnedCount}</p>
-              <p className="text-base text-gray-500 mt-1">已學字數</p>
+              <p className="text-4xl font-bold text-zhu">{stats.learnedCount}</p>
+              <p className="text-base text-[#8b7355] mt-1">已學字數</p>
             </div>
             <div className="text-center">
               <p className="text-4xl font-bold text-green-600">{stats.accuracy}%</p>
-              <p className="text-base text-gray-500 mt-1">正確率</p>
+              <p className="text-base text-[#8b7355] mt-1">正確率</p>
             </div>
             <div className="text-center">
               <p className="text-4xl font-bold text-orange-500">{wrongBook.length}</p>
-              <p className="text-base text-gray-500 mt-1">錯字本</p>
+              <p className="text-base text-[#8b7355] mt-1">錯字本</p>
             </div>
           </div>
         </div>
       )}
 
       {/* Wrong book list */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 mb-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-6">錯字本</h2>
+      <div className="bg-card rounded-2xl shadow-sm border border-gold p-8 mb-6">
+        <h2 className="text-xl font-semibold text-ink mb-6">錯字本</h2>
         <WrongBookList items={wrongBook} />
       </div>
 
       {/* Linked courses */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+      <div className="bg-card rounded-2xl shadow-sm border border-gold p-8">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-800">已選課程</h2>
+          <h2 className="text-xl font-semibold text-ink">已選課程</h2>
           <button
             onClick={() => setShowAddCourse((v) => !v)}
-            className="min-h-[64px] px-5 text-lg font-medium rounded-xl border-2 border-blue-600 text-blue-600 hover:bg-blue-50 transition-colors"
+            className="min-h-[64px] px-5 text-lg font-medium rounded-xl border-2 border-gold text-[#8b7355] hover:bg-[#fdf6e3] transition-colors"
           >
             + 新增課程
           </button>
         </div>
 
         {linkedCourses.length === 0 && !showAddCourse && (
-          <p className="text-lg text-gray-400">尚未連結任何課程</p>
+          <p className="text-lg text-[#8b7355]">尚未連結任何課程</p>
         )}
 
         <div className="flex flex-col gap-3">
@@ -177,18 +177,18 @@ export default function StudentSettingsPage() {
             return (
               <div
                 key={courseId}
-                className="flex items-center justify-between p-4 rounded-xl border border-gray-200"
+                className="flex items-center justify-between p-4 rounded-xl border border-gold"
               >
                 <div>
                   {course ? (
                     <>
-                      <p className="text-lg font-medium text-gray-800">
+                      <p className="text-lg font-medium text-ink">
                         {course.publisher}・{course.grade} 年級・{SEMESTER_LABEL[course.semester]}・第 {course.lessonNumber} 課
                       </p>
-                      <p className="text-base text-gray-500">{course.lessonTitle}</p>
+                      <p className="text-base text-[#8b7355]">{course.lessonTitle}</p>
                     </>
                   ) : (
-                    <p className="text-lg text-gray-400">載入中…</p>
+                    <p className="text-lg text-[#8b7355]">載入中…</p>
                   )}
                 </div>
                 <button
@@ -204,12 +204,12 @@ export default function StudentSettingsPage() {
 
         {/* Add course panel */}
         {showAddCourse && (
-          <div className="mt-6 border-t pt-6">
-            <h3 className="text-lg font-semibold text-gray-700 mb-4">選擇課程</h3>
+          <div className="mt-6 border-t border-gold pt-6">
+            <h3 className="text-lg font-semibold text-ink mb-4">選擇課程</h3>
             {availableToAdd.length === 0 ? (
-              <p className="text-lg text-gray-400">
+              <p className="text-lg text-[#8b7355]">
                 沒有可新增的課程。請先{' '}
-                <Link href="/courses/import" className="text-blue-600 hover:underline">
+                <Link href="/courses/import" className="text-[#c0392b] hover:underline">
                   匯入課程
                 </Link>
                 。
@@ -221,12 +221,12 @@ export default function StudentSettingsPage() {
                     key={course.id}
                     onClick={() => handleLinkCourse(course)}
                     disabled={linkingCourseId === course.id}
-                    className="w-full text-left p-4 rounded-xl border-2 border-gray-200 hover:border-blue-400 transition-colors disabled:opacity-50"
+                    className="w-full text-left p-4 rounded-xl border-2 border-gold hover:border-[#c0392b] transition-colors disabled:opacity-50"
                   >
-                    <p className="text-lg font-medium text-gray-800">
+                    <p className="text-lg font-medium text-ink">
                       {course.publisher}・{course.grade} 年級・{SEMESTER_LABEL[course.semester]}・第 {course.lessonNumber} 課
                     </p>
-                    <p className="text-base text-gray-500">{course.lessonTitle}・{course.characterCount} 個生字</p>
+                    <p className="text-base text-[#8b7355]">{course.lessonTitle}・{course.characterCount} 個生字</p>
                   </button>
                 ))}
               </div>
@@ -236,7 +236,7 @@ export default function StudentSettingsPage() {
       </div>
 
       {/* Delete student */}
-      <div className="mt-8 pt-6 border-t border-gray-200">
+      <div className="mt-8 pt-6 border-t border-gold">
         <button
           onClick={handleDelete}
           className="min-h-[64px] w-full text-xl font-semibold rounded-xl border-2 border-red-300 text-red-600 hover:bg-red-50 transition-colors"

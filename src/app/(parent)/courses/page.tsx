@@ -70,7 +70,7 @@ export default function CoursesPage() {
   }
 
   if (loading) {
-    return <p className="text-lg text-gray-500">載入中…</p>
+    return <p className="text-lg text-[#8b7355]">載入中…</p>
   }
 
   const confirmCourse = courses.find(c => c.id === confirmDeleteId)
@@ -80,12 +80,12 @@ export default function CoursesPage() {
       {/* 刪除確認對話框 */}
       {confirmCourse && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
-          <div className="bg-white rounded-2xl p-8 flex flex-col gap-6 w-full max-w-sm shadow-xl">
-            <h2 className="text-2xl font-bold text-gray-800 text-center">確定要刪除？</h2>
-            <p className="text-lg text-gray-600 text-center leading-relaxed">
+          <div className="bg-card rounded-2xl p-8 flex flex-col gap-6 w-full max-w-sm shadow-xl border border-gold">
+            <h2 className="text-2xl font-bold text-ink font-serif text-center">確定要刪除？</h2>
+            <p className="text-lg text-[#8b7355] text-center leading-relaxed">
               {confirmCourse.publisher}・{confirmCourse.grade} 年級・{SEMESTER_LABEL[confirmCourse.semester]}・第 {confirmCourse.lessonNumber} 課
               <br />
-              <span className="font-semibold">{confirmCourse.lessonTitle}</span>
+              <span className="font-semibold text-ink">{confirmCourse.lessonTitle}</span>
             </p>
             <p className="text-base text-red-600 text-center">刪除後無法復原，包含所有生字資料。</p>
             <button
@@ -96,7 +96,7 @@ export default function CoursesPage() {
             </button>
             <button
               onClick={() => setConfirmDeleteId(null)}
-              className="min-h-[64px] text-xl font-semibold rounded-xl border-2 border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
+              className="min-h-[64px] text-xl font-semibold rounded-xl border-2 border-gold text-[#8b7355] hover:bg-card transition-colors"
             >
               取消
             </button>
@@ -104,25 +104,27 @@ export default function CoursesPage() {
         </div>
       )}
 
-      <Link href="/dashboard" className="inline-block mb-6 text-lg text-blue-600 hover:underline">
+      <Link href="/dashboard" className="inline-block mb-6 text-lg text-[#8b7355] hover:underline">
         ← 回到首頁
       </Link>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">課程管理</h1>
+        <h1 className="text-3xl font-bold text-ink font-serif">課程管理</h1>
         <Link
           href="/courses/import"
-          className="min-h-[64px] px-6 text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-2"
+          className="min-h-[64px] px-6 text-xl font-semibold rounded-xl text-[#fdf6e3] transition-all hover:brightness-90 flex items-center gap-2"
+          style={{ background: 'linear-gradient(135deg, #c0392b, #8b1a1a)' }}
         >
           <span className="text-2xl leading-none">+</span> 匯入新課程
         </Link>
       </div>
 
       {courses.length === 0 ? (
-        <div className="rounded-2xl border-2 border-dashed border-gray-300 p-16 text-center">
-          <p className="text-xl text-gray-500 mb-6">尚未匯入任何課程</p>
+        <div className="rounded-2xl border-2 border-dashed border-gold p-16 text-center">
+          <p className="text-xl text-[#8b7355] mb-6">尚未匯入任何課程</p>
           <Link
             href="/courses/import"
-            className="inline-flex min-h-[64px] items-center px-8 text-xl font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors gap-2"
+            className="inline-flex min-h-[64px] items-center px-8 text-xl font-semibold rounded-xl text-[#fdf6e3] transition-all hover:brightness-90 gap-2"
+            style={{ background: 'linear-gradient(135deg, #c0392b, #8b1a1a)' }}
           >
             <span className="text-2xl leading-none">+</span> 匯入第一個課程
           </Link>
@@ -135,16 +137,16 @@ export default function CoursesPage() {
             return (
               <div
                 key={course.id}
-                className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col gap-4"
+                className="bg-card rounded-2xl shadow-sm border border-gold p-6 flex flex-col gap-4"
               >
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <p className="text-xl font-bold text-gray-800">
+                    <p className="text-xl font-bold text-ink">
                       {course.publisher}・{course.grade} 年級・{SEMESTER_LABEL[course.semester]}・第 {course.lessonNumber} 課
                     </p>
-                    <p className="text-lg text-gray-600 mt-1">{course.lessonTitle}</p>
+                    <p className="text-lg text-[#8b7355] mt-1">{course.lessonTitle}</p>
                     {course.characterCount > 0 && (
-                      <p className="text-base text-gray-400 mt-1">共 {course.characterCount} 個生字</p>
+                      <p className="text-base text-[#8b7355] mt-1">共 {course.characterCount} 個生字</p>
                     )}
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
@@ -172,13 +174,13 @@ export default function CoursesPage() {
                 )}
 
                 {regen && (
-                  <div className="bg-blue-50 rounded-xl px-4 py-3 border border-blue-200">
-                    <p className="text-base text-blue-700">
+                  <div className="bg-card rounded-xl px-4 py-3 border border-gold">
+                    <p className="text-base text-[#8b7355]">
                       正在生成 AI 內容… {regen.done} / {regen.total} 個
                     </p>
-                    <div className="w-full bg-blue-200 rounded-full h-2 mt-2">
+                    <div className="w-full bg-gold/40 rounded-full h-2 mt-2">
                       <div
-                        className="bg-blue-500 h-2 rounded-full transition-all"
+                        className="bg-zhu h-2 rounded-full transition-all"
                         style={{ width: `${(regen.done / regen.total) * 100}%` }}
                       />
                     </div>
