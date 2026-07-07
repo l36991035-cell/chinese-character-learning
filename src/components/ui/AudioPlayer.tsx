@@ -39,9 +39,9 @@ export function AudioPlayer({ text }: { text: string }) {
     <button
       onClick={handlePlay}
       disabled={playing}
-      className="min-h-[64px] w-full flex items-center justify-center gap-3 text-xl font-medium rounded-xl border-2 border-blue-500 text-blue-600 hover:bg-blue-50 disabled:opacity-60 transition-colors"
+      className="min-h-[56px] w-full flex items-center justify-center gap-2 text-xl font-semibold rounded-xl border border-gold text-[#8b7355] hover:bg-paper disabled:opacity-50 transition-colors"
     >
-      {playing ? '🔊 播放中…' : error ? '⚠️ 不支援語音' : '▶ 播放'}
+      {playing ? '🔊 播放中…' : error ? '⚠️ 不支援語音' : '🔊 聽讀音'}
     </button>
   )
 }

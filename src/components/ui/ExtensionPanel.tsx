@@ -1,4 +1,6 @@
+'use client'
 import type { Extensions } from '@/types'
+import { AudioPlayer } from '@/components/ui/AudioPlayer'
 
 interface ExtensionPanelProps {
   character: string
@@ -40,6 +42,7 @@ export function ExtensionPanel({
             {strokeCount != null && <span>筆畫：<span className="font-semibold text-[#8b7355]">{strokeCount} 畫</span></span>}
           </div>
         )}
+        <AudioPlayer text={character} />
       </div>
 
       {/* 生字解釋 */}

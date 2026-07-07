@@ -75,7 +75,7 @@ export function HandwritingCanvas() {
       <canvas
         ref={canvasRef}
         className="w-full rounded-xl border-2 border-dashed border-gray-300 bg-white touch-none cursor-crosshair"
-        style={{ height: '200px' }}
+        style={{ height: '300px' }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}

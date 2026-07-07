@@ -12,6 +12,7 @@ import { usePracticeSession } from '@/hooks/usePracticeSession'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { HandwritingCanvas } from '@/components/ui/HandwritingCanvas'
 import { StrokeOrderModal } from '@/components/ui/StrokeOrderModal'
+import { AudioPlayer } from '@/components/ui/AudioPlayer'
 import type { Student, GeneratedContent, WrongBookEntry } from '@/types'
 import type { Character } from '@/types'
 
@@ -338,6 +339,8 @@ export default function PracticePage() {
             </div>
           </div>
 
+          <AudioPlayer key={`audio-${currentIndex}`} text={currentItem.content.vocabulary} />
+
           <HandwritingCanvas key={currentIndex} />
 
           <div className="flex gap-3">
@@ -371,6 +374,8 @@ export default function PracticePage() {
               {currentItem.content.vocabularyBopomofo}
             </p>
           </div>
+
+          <AudioPlayer text={currentItem.content.vocabulary} />
 
           {submitError && (
             <p className="text-lg text-zhu text-center font-medium">{submitError}</p>
