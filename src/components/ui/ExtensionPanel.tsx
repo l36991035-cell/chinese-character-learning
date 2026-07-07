@@ -68,11 +68,14 @@ export function ExtensionPanel({
           <h3 className="text-base font-semibold text-ink mb-3 pl-3 border-l-2 border-zhu tracking-widest font-serif">造詞</h3>
           <div className="flex flex-col gap-3">
             {wordFormation.map((item, i) => (
-              <div key={i} className="flex flex-col gap-0.5">
-                <span className="text-xl font-bold text-ink font-serif">{item.word}</span>
-                {item.explanation && (
-                  <span className="text-base text-[#8b7355]">{item.explanation}</span>
-                )}
+              <div key={i} className="flex items-start gap-3">
+                <div className="flex flex-col gap-0.5 flex-1">
+                  <span className="text-xl font-bold text-ink font-serif">{item.word}</span>
+                  {item.explanation && (
+                    <span className="text-base text-[#8b7355]">{item.explanation}</span>
+                  )}
+                </div>
+                <AudioPlayer text={item.word} size="sm" />
               </div>
             ))}
           </div>
@@ -86,7 +89,10 @@ export function ExtensionPanel({
           <div className="flex flex-col gap-4">
             {extensions.multiPronunciation.map((item, i) => (
               <div key={i} className="flex flex-col gap-1">
-                <span className="text-2xl font-bold text-zhu font-serif">{item.pronunciation}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl font-bold text-zhu font-serif">{item.pronunciation}</span>
+                  <AudioPlayer text={item.example} size="sm" />
+                </div>
                 <span className="text-lg font-semibold text-ink font-serif">{item.example}</span>
                 <span className="text-base text-[#8b7355]">{item.meaning}</span>
               </div>

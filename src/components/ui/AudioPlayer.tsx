@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef } from 'react'
 
-export function AudioPlayer({ text }: { text: string }) {
+export function AudioPlayer({ text, size = 'default' }: { text: string; size?: 'default' | 'sm' }) {
   const [playing, setPlaying] = useState(false)
   const [error, setError] = useState(false)
   const playingRef = useRef(false)
@@ -33,6 +33,18 @@ export function AudioPlayer({ text }: { text: string }) {
 
     window.speechSynthesis.cancel()
     window.speechSynthesis.speak(utterance)
+  }
+
+  if (size === 'sm') {
+    return (
+      <button
+        onClick={handlePlay}
+        disabled={playing}
+        className="shrink-0 h-9 px-3 flex items-center justify-center gap-1 text-base rounded-lg border border-gold text-[#8b7355] hover:bg-paper disabled:opacity-50 transition-colors"
+      >
+        {playing ? '🔊…' : error ? '⚠️' : '🔊'}
+      </button>
+    )
   }
 
   return (
