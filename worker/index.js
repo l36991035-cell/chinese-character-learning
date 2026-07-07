@@ -30,6 +30,8 @@ Return ONLY valid JSON with NO extra text. Example format (for character "火"):
 
 Now generate the actual content for the target character "{character}". Do NOT copy the example above.
 
+{pronunciationNote}
+
 Rules for core fields:
 - vocabulary: 2–3 characters containing the target character, common and age-appropriate
 - vocabularyBopomofo: exact Bopomofo with tones for each syllable, space-separated
@@ -115,7 +117,7 @@ export default {
       })
     }
 
-    const { character, grade } = body
+    const { character, grade, pronunciationHint } = body
     if (!character || !grade) {
       return new Response(JSON.stringify({ error: 'Missing character or grade' }), {
         status: 400,
@@ -133,7 +135,13 @@ export default {
 
     let raw
     try {
-      const prompt = COMBINED_PROMPT.replace(/{character}/g, character).replace(/{grade}/g, String(grade))
+      const pronunciationNote = pronunciationHint
+        ? `IMPORTANT: In this textbook, 「${character}」 is read as ${pronunciationHint}. Use this pronunciation for vocabulary, sentence, and readingText. In multiPronunciation, list ${pronunciationHint} first.`
+        : ''
+      const prompt = COMBINED_PROMPT
+        .replace(/{character}/g, character)
+        .replace(/{grade}/g, String(grade))
+        .replace(/{pronunciationNote}/g, pronunciationNote)
       raw = await callClaude(apiKey, prompt)
     } catch (err) {
       return new Response(JSON.stringify({ error: String(err) }), {

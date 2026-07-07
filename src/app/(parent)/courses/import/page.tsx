@@ -8,7 +8,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import type { Publisher, Course, CourseStatus } from '@/types'
 import Link from 'next/link'
 
-type Step = 'form' | 'upload' | 'processing' | 'done'
+type Step = 'form' | 'upload' | 'hints' | 'processing' | 'done'
 type UploadMode = 'file' | 'manual'
 
 const PUBLISHERS: Publisher[] = ['康軒', '南一', '翰林']
@@ -41,6 +41,8 @@ export default function ImportPage() {
   const [courseStatus, setCourseStatus] = useState<CourseStatus | null>(null)
   const [characterCount, setCharacterCount] = useState<number>(0)
   const [generatedCount, setGeneratedCount] = useState<number>(0)
+  const [pendingChars, setPendingChars] = useState<string[]>([])
+  const [pronunciationHints, setPronunciationHints] = useState<Record<string, string>>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const previewChars = [...new Set((manualText.match(/[一-鿿]/g) ?? []))]
@@ -75,9 +77,10 @@ export default function ImportPage() {
     if (file) handleFileSelect(file)
   }, [])
 
-  async function runAiGeneration(charIds: string[], parsedChars: Array<{ character: string }>, cId: number) {
+  async function runAiGeneration(charIds: string[], parsedChars: Array<{ character: string }>, cId: number, hints: Record<string, string> = {}) {
     for (let i = 0; i < parsedChars.length; i++) {
-      await generateAndSaveCharacter(charIds[i], cId, parsedChars[i].character, form.grade)
+      const hint = hints[parsedChars[i].character] || undefined
+      await generateAndSaveCharacter(charIds[i], cId, parsedChars[i].character, form.grade, hint)
       setGeneratedCount(i + 1)
       if (i < parsedChars.length - 1) {
         await new Promise(r => setTimeout(r, 6000))
@@ -118,40 +121,39 @@ export default function ImportPage() {
         return
       }
 
-      const parsedChars = uniqueChars.map(c => ({ character: c }))
-      const charIds = await saveCharacters(courseId, parsedChars)
-      await updateCourseStatus(courseId, 'ai_generating', { characterCount: uniqueChars.length })
-
-      setCourseStatus('ai_generating')
-      setCharacterCount(uniqueChars.length)
-      setGeneratedCount(0)
-      setStep('processing')
-
-      await runAiGeneration(charIds, parsedChars, courseId)
+      setPendingChars(uniqueChars)
+      setPronunciationHints({})
+      setStep('hints')
     } catch (err) {
       setUploadError('解析失敗：' + String(err))
-      if (courseId) await updateCourseStatus(courseId, 'error')
     } finally {
       setUploading(false)
     }
   }
 
-  async function handleManualSubmit() {
+  function handleManualSubmit() {
     if (!courseId || previewChars.length === 0) return
+    setPendingChars(previewChars)
+    setPronunciationHints({})
+    setStep('hints')
+  }
+
+  async function handleStartGeneration() {
+    if (!courseId || pendingChars.length === 0) return
     setUploading(true)
     setUploadError(null)
 
     try {
-      const parsedChars = previewChars.map(c => ({ character: c }))
+      const parsedChars = pendingChars.map(c => ({ character: c }))
       const charIds = await saveCharacters(courseId, parsedChars)
-      await updateCourseStatus(courseId, 'ai_generating', { characterCount: previewChars.length })
+      await updateCourseStatus(courseId, 'ai_generating', { characterCount: pendingChars.length })
 
       setCourseStatus('ai_generating')
-      setCharacterCount(previewChars.length)
+      setCharacterCount(pendingChars.length)
       setGeneratedCount(0)
       setStep('processing')
 
-      await runAiGeneration(charIds, parsedChars, courseId)
+      await runAiGeneration(charIds, parsedChars, courseId, pronunciationHints)
     } catch (err) {
       setUploadError('送出失敗：' + String(err))
       if (courseId) await updateCourseStatus(courseId, 'error')
@@ -390,6 +392,49 @@ export default function ImportPage() {
               </button>
             </>
           )}
+        </div>
+      )}
+
+      {/* Step 2.5: Pronunciation hints */}
+      {step === 'hints' && (
+        <div className="bg-card rounded-2xl shadow-sm border border-gold p-8 flex flex-col gap-6">
+          <div>
+            <h2 className="text-2xl font-bold text-ink font-serif mb-1">確認生字讀音</h2>
+            <p className="text-lg text-[#8b7355]">找到 {pendingChars.length} 個生字。如果某個字在課本裡用特定讀音，請填入注音，其他留空即可。</p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            {pendingChars.map((char) => (
+              <div key={char} className="flex items-center gap-4 bg-[#fdf6e3] rounded-xl border border-gold px-4 py-3">
+                <span className="text-4xl font-bold text-ink font-serif w-12 text-center shrink-0">{char}</span>
+                <input
+                  type="text"
+                  value={pronunciationHints[char] ?? ''}
+                  onChange={(e) => setPronunciationHints(prev => ({ ...prev, [char]: e.target.value }))}
+                  placeholder="選填，如 ㄏㄞˊ"
+                  className="flex-1 min-h-[48px] px-3 text-lg rounded-lg border border-gold focus:border-[#c0392b] focus:outline-none bg-card text-ink"
+                />
+              </div>
+            ))}
+          </div>
+
+          {uploadError && <p className="text-lg text-red-600">{uploadError}</p>}
+
+          <button
+            onClick={handleStartGeneration}
+            disabled={uploading}
+            className="min-h-[64px] text-xl font-semibold rounded-xl text-[#fdf6e3] transition-all hover:brightness-90 disabled:opacity-50"
+            style={{ background: 'linear-gradient(135deg, #c0392b, #8b1a1a)' }}
+          >
+            {uploading ? '送出中…' : `開始 AI 生成（${pendingChars.length} 個生字）`}
+          </button>
+
+          <button
+            onClick={() => setStep('upload')}
+            className="min-h-[48px] text-lg text-[#8b7355] hover:underline"
+          >
+            ← 返回修改生字
+          </button>
         </div>
       )}
 

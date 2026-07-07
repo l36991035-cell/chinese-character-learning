@@ -64,7 +64,8 @@ export async function generateAndSaveCharacter(
   characterId: string,
   courseId: number,
   character: string,
-  grade: number
+  grade: number,
+  pronunciationHint?: string
 ): Promise<void> {
   await saveGeneratedContent({
     characterId, courseId, grade, character,
@@ -80,10 +81,12 @@ export async function generateAndSaveCharacter(
 
   try {
     const workerUrl = process.env.NEXT_PUBLIC_AI_WORKER_URL
+    const body: Record<string, unknown> = { character, grade }
+    if (pronunciationHint) body.pronunciationHint = pronunciationHint
     const res = await fetch(workerUrl!, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ character, grade }),
+      body: JSON.stringify(body),
     })
     if (!res.ok) {
       const errText = await res.text()
