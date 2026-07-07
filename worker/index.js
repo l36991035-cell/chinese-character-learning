@@ -45,7 +45,7 @@ Rules for core fields:
 Rules for extension fields (always include ALL fields regardless of grade, use empty array [] only if truly not applicable):
 - confusableChars: array of {"char":"字","explanation":"說明"}，max 3 genuinely visually confusable characters. Always try to find at least one.
 - wordFormation: 3–5 common compound words as array of {"word":"詞語","explanation":"簡短說明這個詞的意思"}
-- multiPronunciation: if this character has multiple pronunciations, list each as {"pronunciation":"注音","meaning":"這個讀音的意思","example":"造詞例子"}，otherwise []
+- multiPronunciation: ONLY include if the character is a genuine 多音字 (different pronunciations with different grammatical roles or meanings). For each pronunciation provide: "pronunciation" (注音), "meaning" (精確說明此讀音的語法功能與意義，例如「動詞：表示做、從事、變成」或「介詞：表示為了、替、因為」，勿混用兩個讀音的意思), "example" (一個詞語，需確認該字在此詞中確實讀這個音，勿用在此讀音下意思模糊的詞). Double-check: each example word must unambiguously belong to that specific pronunciation. Otherwise [].
 - synonyms: 2–4 synonyms or similar-meaning words as string array. Always include if any exist.
 - antonyms: 2–4 antonyms or opposite-meaning words as string array. Always include if any exist.
 - idioms: 1–3 common Chinese idioms containing or related to this character as array of {"idiom":"成語","meaning":"成語的意思"}. Always try to find at least one.
@@ -61,7 +61,7 @@ async function callClaude(apiKey, prompt) {
     },
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1500,
+      max_tokens: 2000,
       messages: [{ role: 'user', content: prompt }],
     }),
   })
