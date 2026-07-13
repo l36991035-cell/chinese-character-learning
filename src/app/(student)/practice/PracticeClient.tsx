@@ -7,16 +7,26 @@ import { getCharactersByCourse } from '@/lib/db/characters'
 import { getGeneratedContent } from '@/lib/db/generated-content'
 import { getWrongBook, addToWrongBook, removeFromWrongBook } from '@/lib/db/wrongbook'
 import { recordPractice } from '@/lib/db/practice-history'
-import { buildPracticeSession } from '@/lib/utils/session-builder'
+import { buildPracticeSession, type PracticeItem } from '@/lib/utils/session-builder'
 import { usePracticeSession } from '@/hooks/usePracticeSession'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { HandwritingCanvas } from '@/components/ui/HandwritingCanvas'
 import { StrokeOrderModal } from '@/components/ui/StrokeOrderModal'
 import { AudioPlayer } from '@/components/ui/AudioPlayer'
+import { ExtensionPanel } from '@/components/ui/ExtensionPanel'
 import type { Student, GeneratedContent, WrongBookEntry } from '@/types'
 import type { Character } from '@/types'
 
 type CourseChar = { char: Character & { id: string }; content: GeneratedContent }
+
+function shuffleArray<T>(arr: T[]): T[] {
+  const out = [...arr]
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[out[i], out[j]] = [out[j], out[i]]
+  }
+  return out
+}
 
 export default function PracticePage() {
   const searchParams = useSearchParams()
@@ -33,8 +43,17 @@ export default function PracticePage() {
   const [student, setStudent] = useState<(Student & { id: number }) | null>(null)
   const [wrongBookItems, setWrongBookItems] = useState<Array<WrongBookEntry & { id: number }>>([])
 
+  // 選字畫面（課文模式）
+  const [pendingItems, setPendingItems] = useState<PracticeItem[]>([])
+  const [showSelectionScreen, setShowSelectionScreen] = useState(false)
+  const [selectedStartIndex, setSelectedStartIndex] = useState(0)
+
+  // 跳轉面板
+  const [showJumpPanel, setShowJumpPanel] = useState(false)
+
   const {
     phase,
+    items: sessionItems,
     currentItem,
     currentIndex,
     totalItems,
@@ -43,22 +62,20 @@ export default function PracticePage() {
     startSession,
     revealAnswer,
     markResult,
+    jumpTo,
   } = usePracticeSession()
 
   useEffect(() => {
     async function load() {
       setLoading(true)
       try {
-        // Load student
         const studentData = await getStudent(studentId)
         if (!studentData) return
         setStudent(studentData as Student & { id: number })
 
-        // Load wrong book
         const wb = await getWrongBook(studentId)
         setWrongBookItems(wb as Array<WrongBookEntry & { id: number }>)
 
-        // Load course characters + generated content
         const linkedCourses = await getStudentCourses(studentId)
         setHasLinkedCourses(linkedCourses.length > 0)
         const courseChars: CourseChar[] = []
@@ -81,7 +98,6 @@ export default function PracticePage() {
         )
         setHasErrorChars(errorCount > 0)
 
-        // Sort by course order
         courseChars.sort((a, b) => a.char.order - b.char.order)
 
         if (mode === 'wrongbook') {
@@ -90,7 +106,14 @@ export default function PracticePage() {
           startSession(wrongOnly.length > 0 ? wrongOnly : items)
         } else {
           const items = buildPracticeSession(wb as Array<WrongBookEntry & { id: number }>, courseChars, studentData.grade)
-          startSession(items)
+          if (items.length === 0) {
+            startSession([])
+          } else {
+            const shuffled = shuffleArray(items)
+            setPendingItems(shuffled)
+            setSelectedStartIndex(0)
+            setShowSelectionScreen(true)
+          }
         }
       } finally {
         setLoading(false)
@@ -99,6 +122,15 @@ export default function PracticePage() {
     load()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [studentId, mode])
+
+  function handleStartFromSelection() {
+    const reordered = [
+      ...pendingItems.slice(selectedStartIndex),
+      ...pendingItems.slice(0, selectedStartIndex),
+    ]
+    startSession(reordered)
+    setShowSelectionScreen(false)
+  }
 
   async function handleCorrect() {
     if (!currentItem || !student) return
@@ -160,6 +192,63 @@ export default function PracticePage() {
         <Skeleton className="h-2 w-full" />
         <Skeleton className="h-16 w-full" />
         <Skeleton className="h-64 w-full" />
+      </div>
+    )
+  }
+
+  // 選字畫面（課文模式）
+  if (showSelectionScreen) {
+    return (
+      <div className="flex flex-col gap-6">
+        <button
+          onClick={() => router.push(`/home?id=${studentId}`)}
+          className="text-lg text-[#8b7355] hover:underline self-start"
+        >
+          ← 離開
+        </button>
+
+        <div>
+          <h2 className="text-2xl font-bold text-ink font-serif mb-1">選擇起始字</h2>
+          <p className="text-base text-[#a89060]">點選你想從哪個字開始，順序已隨機打亂</p>
+        </div>
+
+        <div className="grid grid-cols-4 gap-3">
+          {pendingItems.map((item, i) => (
+            <button
+              key={item.characterId}
+              onClick={() => setSelectedStartIndex(i)}
+              className={`rounded-xl border-2 p-4 flex flex-col items-center gap-1 transition-all ${
+                i === selectedStartIndex
+                  ? 'border-zhu bg-[#fff0ee]'
+                  : i < selectedStartIndex
+                  ? 'border-gold/40 bg-paper/50 opacity-50'
+                  : 'border-gold bg-card hover:bg-paper'
+              }`}
+              style={{ boxShadow: i === selectedStartIndex ? '0 2px 12px rgba(192,57,43,0.15)' : undefined }}
+            >
+              <span className={`text-3xl font-bold font-serif ${i === selectedStartIndex ? 'text-zhu' : 'text-ink'}`}>
+                {item.character}
+              </span>
+              {i === selectedStartIndex && (
+                <span className="text-xs text-zhu font-medium">起點</span>
+              )}
+              {item.isFromWrongBook && i !== selectedStartIndex && (
+                <span className="text-xs text-[#c0392b] font-medium">錯字</span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={handleStartFromSelection}
+          disabled={pendingItems.length === 0}
+          className="min-h-[64px] text-xl font-semibold rounded-xl text-[#fdf6e3] transition-all hover:brightness-90 disabled:opacity-50"
+          style={{ background: 'linear-gradient(135deg, #c0392b, #8b1a1a)', boxShadow: '0 4px 12px rgba(192,57,43,0.35)' }}
+        >
+          {pendingItems.length > 0
+            ? `開始練習（從「${pendingItems[selectedStartIndex]?.character}」開始，共 ${pendingItems.length - selectedStartIndex} 字）`
+            : '目前沒有可練習的字'}
+        </button>
       </div>
     )
   }
@@ -259,7 +348,7 @@ export default function PracticePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Exit confirmation dialog */}
+      {/* 筆順 Modal */}
       {showStrokeOrder && (
         <StrokeOrderModal
           character={targetChar}
@@ -267,6 +356,7 @@ export default function PracticePage() {
         />
       )}
 
+      {/* 離開確認 */}
       {showExitConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
           <div className="bg-card rounded-xl border border-gold p-8 flex flex-col gap-6 w-full max-w-sm" style={{ boxShadow: '0 8px 32px rgba(44,24,16,0.15)' }}>
@@ -288,7 +378,60 @@ export default function PracticePage() {
         </div>
       )}
 
-      {/* Progress */}
+      {/* 跳轉面板 */}
+      {showJumpPanel && (
+        <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 px-4 pb-4">
+          <div
+            className="bg-card rounded-xl border border-gold p-6 flex flex-col gap-4 w-full max-w-sm"
+            style={{ boxShadow: '0 8px 32px rgba(44,24,16,0.15)', maxHeight: '80vh', overflowY: 'auto' }}
+          >
+            <h2 className="text-xl font-bold text-ink font-serif">跳轉到…</h2>
+            <div className="grid grid-cols-4 gap-2">
+              {sessionItems.map((item, i) => {
+                const isPast = i < currentIndex
+                const isCurrent = i === currentIndex
+                const result = results.find((r) => r.item.characterId === item.characterId)
+                return (
+                  <button
+                    key={item.characterId}
+                    onClick={() => {
+                      jumpTo(i)
+                      setShowJumpPanel(false)
+                    }}
+                    className={`rounded-lg border p-3 flex flex-col items-center gap-1 transition-all ${
+                      isCurrent
+                        ? 'border-zhu bg-[#fff0ee]'
+                        : isPast
+                        ? 'border-gold/30 bg-paper/50 opacity-60'
+                        : 'border-gold bg-card hover:bg-paper'
+                    }`}
+                  >
+                    <span className={`text-2xl font-bold font-serif ${isCurrent ? 'text-zhu' : isPast ? 'text-[#a89060]' : 'text-ink'}`}>
+                      {item.character}
+                    </span>
+                    {isPast && result && (
+                      <span className={`text-xs font-bold ${result.isCorrect ? 'text-green-600' : 'text-zhu'}`}>
+                        {result.isCorrect ? '○' : '×'}
+                      </span>
+                    )}
+                    {isCurrent && (
+                      <span className="text-xs text-zhu font-medium">現在</span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+            <button
+              onClick={() => setShowJumpPanel(false)}
+              className="min-h-[52px] text-lg font-semibold rounded-xl border border-gold text-[#8b7355] hover:bg-paper transition-colors"
+            >
+              取消
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 頂部：離開 / 來源標記 / 跳轉按鈕 */}
       <div className="flex items-center justify-between">
         <button
           onClick={() => setShowExitConfirm(true)}
@@ -296,25 +439,30 @@ export default function PracticePage() {
         >
           ← 離開
         </button>
-        <span className="text-base text-[#a89060]">
-          {currentItem.isFromWrongBook ? '錯字本' : '課文'}
-        </span>
-      </div>
-      <div className="flex items-center justify-between">
-        <p className="text-xl text-[#8b7355]">
-          第 {currentIndex + 1} / {totalItems} 題
-        </p>
+        <div className="flex items-center gap-3">
+          <span className="text-base text-[#a89060]">
+            {currentItem.isFromWrongBook ? '錯字本' : '課文'}
+          </span>
+          <button
+            onClick={() => setShowJumpPanel(true)}
+            className="px-3 py-1.5 rounded-lg border border-gold text-sm font-medium text-[#8b7355] hover:bg-paper transition-colors"
+          >
+            跳轉
+          </button>
+        </div>
       </div>
 
-      {/* Progress bar */}
+      <p className="text-xl text-[#8b7355]">第 {currentIndex + 1} / {totalItems} 題</p>
+
+      {/* 進度條 */}
       <div className="w-full bg-gold rounded-full h-2">
         <div
           className="bg-ink h-2 rounded-full transition-all"
-          style={{ width: `${((currentIndex) / totalItems) * 100}%` }}
+          style={{ width: `${(currentIndex / totalItems) * 100}%` }}
         />
       </div>
 
-      {/* Practice card */}
+      {/* 練習卡 */}
       {phase === 'practicing' && (
         <div className="bg-card rounded-xl border border-gold p-8 flex flex-col gap-6" style={{ boxShadow: '0 2px 12px rgba(44,24,16,0.08), inset 0 1px 0 rgba(255,255,255,0.8)' }}>
           <p className="text-lg text-[#a89060] font-medium tracking-widest">詞語模式</p>
@@ -361,7 +509,7 @@ export default function PracticePage() {
         </div>
       )}
 
-      {/* Reveal card */}
+      {/* 答案卡 */}
       {phase === 'revealing' && (
         <div className="bg-card rounded-xl border border-gold p-8 flex flex-col gap-6" style={{ boxShadow: '0 2px 12px rgba(44,24,16,0.08), inset 0 1px 0 rgba(255,255,255,0.8)' }}>
           <p className="text-lg text-[#a89060] font-medium tracking-widest">正確答案</p>
@@ -399,6 +547,26 @@ export default function PracticePage() {
           </div>
         </div>
       )}
+
+      {/* 延伸學習 */}
+      <div className="mt-2">
+        <h3 className="text-lg font-semibold text-ink mb-3 pl-3 border-l-2 border-zhu tracking-widest font-serif">延伸學習</h3>
+        <ExtensionPanel
+          key={currentItem.characterId}
+          character={currentItem.character}
+          bopomofo={
+            currentItem.content.vocabulary
+              ? currentItem.content.vocabularyBopomofo?.split(' ')[
+                  currentItem.content.vocabulary.indexOf(currentItem.character)
+                ]
+              : undefined
+          }
+          definition={currentItem.content.definition}
+          radical={currentItem.content.radical}
+          strokeCount={currentItem.content.strokeCount}
+          extensions={currentItem.content.extensions}
+        />
+      </div>
     </div>
   )
 }

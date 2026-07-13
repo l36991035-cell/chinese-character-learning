@@ -50,8 +50,13 @@ export function usePracticeSession() {
     })
   }, [])
 
+  const jumpTo = useCallback((index: number) => {
+    setState((s) => ({ ...s, currentIndex: index, phase: 'practicing' }))
+  }, [])
+
   return {
     phase: state.phase,
+    items: state.items,
     currentItem: state.items[state.currentIndex] ?? null,
     currentIndex: state.currentIndex,
     totalItems: state.items.length,
@@ -60,5 +65,6 @@ export function usePracticeSession() {
     startSession,
     revealAnswer,
     markResult,
+    jumpTo,
   }
 }
