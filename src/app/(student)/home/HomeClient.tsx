@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { getStudent, getStudentCourses } from '@/lib/db/students'
 import { useWrongBook } from '@/hooks/useWrongBook'
 import { WrongBookAlert } from '@/components/ui/WrongBookAlert'
