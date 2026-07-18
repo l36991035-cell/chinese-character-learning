@@ -53,6 +53,42 @@ Rules for extension fields (always include ALL fields regardless of grade, use e
 - idioms: 1–3 common Chinese idioms containing or related to this character as array of {"idiom":"成語","meaning":"成語的意思"}. Always try to find at least one.
 - rhetoric: []`
 
+// 異體字 → 教育部標準字體 對照表
+const VARIANT_CHAR_MAP = {
+  '爲': '為',
+  '裏': '裡',
+  '靣': '面',
+  '覈': '核',
+  '鹼': '鹼',
+  '羣': '群',
+  '峯': '峰',
+  '棱': '稜',
+  '凴': '憑',
+  '踊': '踴',
+}
+
+function normalizeVariantChars(text) {
+  if (typeof text !== 'string') return text
+  let result = text
+  for (const [variant, standard] of Object.entries(VARIANT_CHAR_MAP)) {
+    result = result.replaceAll(variant, standard)
+  }
+  return result
+}
+
+function deepNormalize(obj) {
+  if (typeof obj === 'string') return normalizeVariantChars(obj)
+  if (Array.isArray(obj)) return obj.map(deepNormalize)
+  if (obj && typeof obj === 'object') {
+    const out = {}
+    for (const [key, value] of Object.entries(obj)) {
+      out[key] = deepNormalize(value)
+    }
+    return out
+  }
+  return obj
+}
+
 async function callClaude(apiKey, prompt) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -74,7 +110,7 @@ async function callClaude(apiKey, prompt) {
   }
   const raw = data.content[0]?.text ?? '{}'
   const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim()
-  return JSON.parse(cleaned)
+  return deepNormalize(JSON.parse(cleaned))
 }
 
 function normalizeWordFormation(arr) {
