@@ -35,12 +35,6 @@ export default function SummaryPage() {
         >
           回首頁
         </button>
-        <button
-          onClick={() => router.push(`/extension?id=${studentId}`)}
-          className="min-h-[64px] text-xl font-medium rounded-xl border-2 border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
-        >
-          查看延伸學習
-        </button>
       </div>
     </div>
   )

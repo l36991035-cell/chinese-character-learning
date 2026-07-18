@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { getStudent, getStudentCourses } from '@/lib/db/students'
 import { useWrongBook } from '@/hooks/useWrongBook'
 import { WrongBookAlert } from '@/components/ui/WrongBookAlert'
@@ -93,13 +92,6 @@ export default function StudentHomePage() {
         </div>
       )}
 
-      {/* Extension learning */}
-      <Link
-        href={`/extension?id=${studentId}`}
-        className="min-h-[64px] flex items-center justify-center text-xl font-medium rounded-xl border border-gold text-[#8b7355] hover:bg-card transition-colors"
-      >
-        查看延伸學習
-      </Link>
     </div>
   )
 }
