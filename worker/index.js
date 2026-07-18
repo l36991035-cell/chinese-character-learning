@@ -5,6 +5,8 @@ Student grade: {grade} (1-6, where 1 is easiest)
 
 Generate ALL learning content for this character in ONE response. Use Traditional Chinese (繁體中文) only. Use Bopomofo (注音符號) for phonetic annotation.
 
+CRITICAL CHARACTER FORM RULE: Every character you output must use the standard Taiwan Ministry of Education form (教育部標準字體). NEVER use variant forms (異體字) or archaic forms. For example: always write 為 not 爲, 著 not 着 (when used as verb), 臺 not 台 (in formal contexts). If in doubt, use the most common printed form taught in Taiwan elementary schools.
+
 Return ONLY valid JSON with NO extra text. Example format (for character "火"):
 {
   "vocabulary": "火車",
@@ -45,7 +47,7 @@ Rules for core fields:
 Rules for extension fields (always include ALL fields regardless of grade, use empty array [] only if truly not applicable):
 - confusableChars: array of {"char":"字","explanation":"說明"}，max 3 genuinely visually confusable characters. Always try to find at least one.
 - wordFormation: 3–5 common compound words as array of {"word":"詞語","explanation":"簡短說明這個詞的意思"}
-- multiPronunciation: ONLY include if the character is a genuine 多音字 (different pronunciations with different grammatical roles or meanings). For each pronunciation provide: "pronunciation" (注音), "meaning" (精確說明此讀音的語法功能與意義，例如「動詞：表示做、從事、變成」或「介詞：表示為了、替、因為」，勿混用兩個讀音的意思), "example" (一個詞語，需確認該字在此詞中確實讀這個音，勿用在此讀音下意思模糊的詞). Double-check: each example word must unambiguously belong to that specific pronunciation. Otherwise [].
+- multiPronunciation: ONLY include if the character is a genuine 多音字 (different pronunciations with different grammatical roles or meanings). CRITICAL: all entries must be pronunciations of the EXACT SAME character 「{character}」 — do NOT include a different character that looks similar or is historically related (e.g. 隻 is a completely different character from 只, not a pronunciation of 只). For each pronunciation provide: "pronunciation" (注音), "meaning" (精確說明此讀音的語法功能與意義，例如「動詞：表示做、從事、變成」或「介詞：表示為了、替、因為」，勿混用兩個讀音的意思), "example" (一個詞語，需確認該字在此詞中確實讀這個音，勿用在此讀音下意思模糊的詞). Double-check: each example word must unambiguously belong to that specific pronunciation. Otherwise [].
 - synonyms: 2–4 synonyms or similar-meaning words as string array. Always include if any exist.
 - antonyms: 2–4 antonyms or opposite-meaning words as string array. Always include if any exist.
 - idioms: 1–3 common Chinese idioms containing or related to this character as array of {"idiom":"成語","meaning":"成語的意思"}. Always try to find at least one.
