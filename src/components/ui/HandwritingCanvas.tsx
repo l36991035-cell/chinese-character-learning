@@ -6,6 +6,7 @@ export function HandwritingCanvas() {
   const isDrawing = useRef(false)
   const lastPos = useRef<{ x: number; y: number } | null>(null)
   const [isEmpty, setIsEmpty] = useState(true)
+  const [mode, setMode] = useState<'pen' | 'eraser'>('pen')
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -56,8 +57,8 @@ export function HandwritingCanvas() {
     ctx.beginPath()
     ctx.moveTo(lastPos.current!.x, lastPos.current!.y)
     ctx.lineTo(pos.x, pos.y)
-    ctx.strokeStyle = '#1a1a1a'
-    ctx.lineWidth = 5
+    ctx.strokeStyle = mode === 'eraser' ? '#ffffff' : '#1a1a1a'
+    ctx.lineWidth = mode === 'eraser' ? 24 : 5
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
     ctx.stroke()
@@ -86,14 +87,26 @@ export function HandwritingCanvas() {
           <p className="text-gray-300 text-2xl select-none">✏️ 在這裡寫字</p>
         </div>
       )}
-      {!isEmpty && (
+      <div className="absolute top-2 right-2 flex gap-2">
         <button
-          onClick={clear}
-          className="absolute top-2 right-2 text-sm text-gray-500 hover:text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-1 shadow-sm"
+          onClick={() => setMode(m => m === 'eraser' ? 'pen' : 'eraser')}
+          className={`text-sm rounded-lg px-3 py-1 shadow-sm border transition-colors ${
+            mode === 'eraser'
+              ? 'bg-amber-100 border-amber-400 text-amber-700 font-semibold'
+              : 'bg-white border-gray-200 text-gray-500 hover:text-gray-800'
+          }`}
         >
-          清除
+          橡皮擦
         </button>
-      )}
+        {!isEmpty && (
+          <button
+            onClick={clear}
+            className="text-sm text-gray-500 hover:text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-1 shadow-sm"
+          >
+            清除
+          </button>
+        )}
+      </div>
     </div>
   )
 }
